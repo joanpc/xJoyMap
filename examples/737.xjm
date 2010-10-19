@@ -2,11 +2,14 @@
 ; PL_xJoyMap.py Example configuration file for the x737
 ;
 ; This file need more work but it's a good example
-; Please share your configuration files
+; Please share your configuration files with the community
+;
+; Installation: Copy this file to your x737 aircraft folder
+;
 
-; ==============================
-; Axis to dataref examples
-; ==============================
+; ================
+; Axis to dataref 
+; ================
 
 [EFIS Map Range]
 axis=4
@@ -27,6 +30,7 @@ round=100
 ;
 ; See dataref.txt in your x737 folder for more datarefs
 ;
+; Some of these assignments have to be tested
 
 [x737 Nav]
 new_command=x737_NAV
@@ -81,18 +85,19 @@ values=0, 1
 ; ==============================
 
 ;
-; You can redefine commands in the main config file the datarefs created above
-; so you don't need to reassign buttons when when changing your aircraft
+; You can redefine Alias commands  already defined in the main config 
+; using the commands created above so you don't need to reassign buttons 
+; on each aircraft change
+;
+; note: New commands are located at  sim/xjoymap/**new_command**
 
 [Nav App]
 new_command=NAV_APP
-description=nav, approach shifted command
 main_command=sim/xjoymap/x737_VORLOC
 shifted_command=sim/xjoymap/x737_APP
 
 [Alt Hold Vertical Speed]
 new_command=vpseed_althold
-description=Alt Hold, Vertical Speed combined command
 main_command=sim/xjoymap/x737_VSPEED
 shifted_command=sim/xjoymap/x737_ALTHLD
 
@@ -107,12 +112,10 @@ shifted_command=sim/xjoymap/x737_ALTHLD
 [Map range toggle]
 new_command=map_range
 dataref=sim/cockpit/switches/EFIS_map_range_selector
-description=Heading toggle
 values = 0, 1, 2, 3, 4, 5, 6
 
 [Map Mode toggle]
 new_command=map_mode
 dataref=sim/cockpit/switches/EFIS_map_submode
-description=EFIS Map mode toggle
 values = 0, 1, 2, 3, 4
 

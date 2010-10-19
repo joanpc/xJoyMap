@@ -1,8 +1,6 @@
 """
 PI_xJoyMap
 
-Pre-lease
-
 Pretends to simplify modifying datarefs with your joystick and creating advanced joy commands
 Needs a axis.ini conf files in the plugin folder or an optional axis.ini in the aircraft folders.
 
