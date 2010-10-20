@@ -17,12 +17,12 @@ dataref=sim/cockpit/switches/EFIS_map_range_selector
 range=6
 
 ; Not working 
-[Vertical Speed]
-axis=5
-dataref=x737/systems/afds/VS_vvi
-range=-4000
-release=200
-round=100
+;[Vertical Speed]
+;axis=5
+;dataref=x737/systems/afds/VS_vvi
+;range=-4000
+;release=200
+;round=100
 
 ; =========================
 ; x737 datarefs to buttons
@@ -31,6 +31,21 @@ round=100
 ; See dataref.txt in your x737 folder for more datarefs
 ;
 ; Some of these assignments have to be tested
+
+[x737 flight director]
+new_command=x737_fdirector
+dataref=x737/systems/afds/fd_master
+values=0, 1, 2
+
+[x737 flight director]
+new_command=x737_atrh
+dataref=x737/systems/athr/athr_armed
+values=0, 1
+
+[x737 N1]
+new_command=x737_N1
+dataref=x737/systems/athr/N1_mode
+values=0,1
 
 [x737 Nav]
 new_command=x737_NAV
@@ -51,16 +66,6 @@ values=0,1
 new_command=x737_HDG
 dataref=x737/systems/afds/HDG
 values=0, 1
-
-[x737 Heading up]
-new_command=x737_heading_up
-dataref=x737/systems/afds/HDG_magnhdg
-increment=1
-
-[x737 Heading down]
-new_command=x737_heading_down
-dataref=x737/systems/afds/HDG_magnhdg
-increment=-1
 
 [x737 VORLOC]
 ; This settings will enable the VOR/LOC

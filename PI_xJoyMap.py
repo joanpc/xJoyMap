@@ -40,9 +40,12 @@ Some constants
 CMD_PREFIX = 'sim/xjoymap/'	#prefix for the new commands
 CONF_FILENAME = 'xjoymap.ini'
 ACF_CONF_FILENAME = '.xjm'
+
+XPLM_MSG_PLANE_LOADED = 102
+XPLM_MSG_PLANE_UNLOADED = 106
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
-#X737_UNLOADED_MESSAGE = -2004318065
+X737_UNLOADED_MESSAGE = -2004318065
 
 """
 JoyAxisAssign
@@ -149,7 +152,7 @@ mainDescription: New command description
 class JoyButtonAlias:
 	def XPluginStart(self):
 		self.Name = "Joys overrides"
-		self.Sig = "JoyButtonAssingsClass-v100.joan.PI"
+		self.Sig = "JoyButtonAliasClass-v100.joan.PI"
 		self.Desc = "Shifted and combo joy commands"
 		return self.Name, self.Sig, self.Desc
 	
@@ -283,7 +286,10 @@ class PythonInterface:
 		self.Desc = "Provides advanced joy mapping features"
 		self.axis, self.buttons, self.buttonsdr =  [], [], []
 		self.shift = 0
-		
+		"""
+		Part of the data collection UGLY fix bellow
+		"""
+		self.old = []
 		self.sys_path = ""
 		self.sys_path = XPLMGetSystemPath(self.sys_path)
 		
@@ -340,19 +346,34 @@ class PythonInterface:
 			self.buttons.append(JoyButtonAlias(self, conf['new_command'], conf['main_command'], \
 			conf['shifted_command'], section))
 			
-		# Reenable flightloop if we have axis defined	
-		if (len(self.axis)): XPLMSetFlightLoopCallbackInterval(self.floop, -1, 0, 0)
-			
+		# Reenable flightloop if we have axis defined
+		if (len(self.axis)): 
+			XPLMRegisterFlightLoopCallback(self, self.floop, 0, 0)
+			XPLMSetFlightLoopCallbackInterval(self.floop, -1, 1, 0)
 	"""
-	Clears all the assignments and disables de flightloop
+	Clears all the assignments and disables the flightloop
 	"""
 	def clearConfig(self):
 		# Disable flightloop
 		XPLMSetFlightLoopCallbackInterval(self.floop, 0, 0, 0)
+		XPLMUnregisterFlightLoopCallback(self, self.floop, 0)
 		# Destroy commands
 		for command in self.buttons: command.destroy()
 		for command in self.buttonsdr: command.destroy()
 		# and buttons
+		'''
+		UGLY fix store old objects to stop garbage collection
+		and x-plane crashes.
+		
+		This will eat up ram on every acf change until y write a main class
+		to wrap all the X-plane calls...
+		'''
+		self.old.append(self.buttons)
+		self.old.append(self.buttonsdr)
+		self.old.append(self.axis)
+		"""
+		UUGLY fix end.
+		"""
 		self.buttons, self.buttonsdr, self.axis = [], [], []
 		
 	"""
@@ -389,25 +410,28 @@ class PythonInterface:
 		"""
 		Detects aircraft changes and reloads the config
 		"""
-		if (inMessage == 102 and inParam == 0): # On aircraft change
-			plane, path = XPLMGetNthAircraftModel(0)
-			"""
-			TODO: Detect x737 by X737_CHECK_FILE
-			"""
-			#if(path.lexists(path[ :-len(plane)] + X737_CHECK_FILE)):
-			if (plane == '737.acf'): # if x737 clear config and wait for x737 plugin
-				self.clearConfig()
+		print inMessage
+		if (inMessage == XPLM_MSG_PLANE_UNLOADED and inParam == 0):
+			print "Unloaded"
+			#self.clearConfig()
+		
+		if (inMessage == XPLM_MSG_PLANE_LOADED and inParam == 0): # On aircraft change
+			plane, plane_path = XPLMGetNthAircraftModel(0)
+
+			if(path.lexists(plane_path[:-len(plane)] + X737_CHECK_FILE)):
+				self.clearConfig() # if x737 clear config and wait for x737 plugin
 				return 1
 			# Reload Config
 			self.clearConfig()	
 			self.config()
 		""" 
-		TODO: that's an ugly fix to reload config if the x737 plugin is enabled
-		Copy pasted from the x737 joy plugin
+		BUG: X-plane hangs when changing plane from x737
 		"""
 		X737_ID = XPLMFindPluginBySignature('bs.x737.plugin')
 		if (inFromWho == X737_ID):
 			if (inMessage == X737_INITIALIZED_MESSAGE):
 				print "x737 initiated, reloading config"
 				self.config()
-		pass
+			if (inMessage == X737_UNLOADED_MESSAGE):
+				print "x737 unloaded, clearing config"
+	pass

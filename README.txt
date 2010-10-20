@@ -31,7 +31,7 @@ at http://github.com/joanpc/xJoyMap
 Installation
 =============
 
-You need the awesome PYTHON INTERFACE PLUGIN 
+You need the awesome PYTHON INTERFACE PLUGIN by Sandy Barbour
 http://www.xpluginsdk.org/python_interface.htm
 
 Copy PI_xJoyMap.py and xJoyMap.ini to your 
@@ -60,7 +60,7 @@ Switch mode:          Useful for hardware switches (pressed_value, unpressed_val
 More shift commands:  To be able to map the saitek x52 mode switch  
 
 *Maybe*
-Switch axis:          Define axis assignments for each switch state   
+shift axis:          Define axis assignments for each shift state   
 
 
 Enjoy
