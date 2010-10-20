@@ -30,6 +30,7 @@ from XPLMProcessing import *
 from XPLMDataAccess import *
 from XPLMPlanes import *
 from XPLMPlugin import *
+from PythonScriptMessaging import *
 import ConfigParser
 from os import path
 
@@ -48,6 +49,33 @@ X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
 
 """
+Xp class
+"""
+class Xp:
+	ugly =[]
+	def XPluginStop(self):
+		pass
+	def XPluginEnable(self):
+		return 1
+	def XPluginDisable(self):
+		pass
+	def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
+		pass
+	def disable(self):
+		pass
+	'''
+	UGLY fix to store old objects to stop garbage collection
+	and x-plane crashes.
+	
+	This will eat up ram on every acf change until i find a way to fix-it
+	
+	The phython interface creates a new plugin for each class instance
+	and x-plane will crash if cannot send messages to their plugins
+	'''
+	def __del__(self):
+		self.__class__.ugly.appedn(self)
+
+"""
 JoyAxisAssign
 
 Assigns a joystick axis to a dataref value.
@@ -64,7 +92,14 @@ dr_round: Rounding done at the dataref, sometimes after setting a dataref value
 		  
 http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
 """
-class JoyAxisAssign:
+class JoyAxisAssign(Xp):
+
+	def XPluginStart(self):
+		self.Name = "Joy Axis Assign Class"
+		self.Sig = "JoyAxisAssignClass-v100.joanpc.PI"
+		self.Desc = "Joy Axis Assign Class"
+		return self.Name, self.Sig, self.Desc
+	
 	def __init__(self, axis, dataref, dr_range, dr_type = int, release = 1, dr_round = 0):
 		self.axis = int(axis)
 		self.dr_value = XPLMFindDataRef(dataref)
@@ -84,13 +119,7 @@ class JoyAxisAssign:
 			self.set_dr = XPLMSetDatai
 		elif (dr_type == "float"):
 			self.get_dr = XPLMGetDataf
-			self.set_dr = XPLMSetDataf	
-
-	def XPluginStart(self):
-		self.Name = "Joy Axis Assign Class"
-		self.Sig = "JoyAxisAssignClass-v100.joanpc.PI"
-		self.Desc = "Joy Axis Assign Class"
-		return self.Name, self.Sig, self.Desc	
+			self.set_dr = XPLMSetDataf
 
 	def get_current_joy(self, axis_value):
 		if (self.negative):
@@ -129,15 +158,6 @@ class JoyAxisAssign:
 		self.old_joy_value = current_joy_value
 		self.old_dr_value = self.get_dr(self.dr_value)
 		return 1
-	
-	def XPluginStop(self):
-		pass
-	def XPluginEnable(self):
-		return 1
-	def XPluginDisable(self):
-		pass
-	def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
-		pass
 
 """
 JoyButtonAlias
@@ -149,7 +169,7 @@ mainCommand: Default command to execute
 shiftCommand: Alternate command executed on parent.shift == True
 mainDescription: New command description
 """
-class JoyButtonAlias:
+class JoyButtonAlias(Xp):
 	def XPluginStart(self):
 		self.Name = "Joys overrides"
 		self.Sig = "JoyButtonAliasClass-v100.joan.PI"
@@ -157,7 +177,6 @@ class JoyButtonAlias:
 		return self.Name, self.Sig, self.Desc
 	
 	def __init__(self, parent, newCommand, mainCommand, shiftCommand = False, mainDescription = ""):
-		
 		self.mainCMD = []
 		for cmd in mainCommand.split(','): self.mainCMD.append(XPLMFindCommand(cmd.strip()))
 		if (shiftCommand):
@@ -170,14 +189,6 @@ class JoyButtonAlias:
 		self.newCH = self.newCommandHandler
 		XPLMRegisterCommandHandler(self, self.newCMD, self.newCH, 0, 0)
 	
-	def XPluginStop(self):
-		pass
-	def XPluginEnable(self):
-		return 1
-	def XPluginDisable(self):
-		pass
-	def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
-		pass
 	def newCommandHandler(self, inCommand, inPhase, inRefcon):
 		if (inPhase == 0):
 			for cmd in self.getCommand(self.parent.shift): XPLMCommandBegin(cmd)
@@ -191,6 +202,7 @@ class JoyButtonAlias:
 			return self.mainCMD
 	def destroy(self):
 		XPLMUnregisterCommandHandler(self, self.newCMD, self.newCH, 0, 0)
+		self.disable()
 		pass
 """
 JoyButtonDataref
@@ -203,7 +215,7 @@ values: values to toggle
 increment: increment steep
 
 """
-class JoyButtonDataref:
+class JoyButtonDataref(Xp):
 	def __init__(self, command, dataref, type ='int', values = False, increment = False, description = ''):
 		self.values = []
 		if (increment != False): 
@@ -260,16 +272,9 @@ class JoyButtonDataref:
 		XPLMUnregisterCommandHandler(self, self.command , self.newCH, 0, 0)
 		#if ((len(self.values) > 2 or self.mode == 'incremental')): 
 		#XPLMUnregisterCommandHandler(self, self.command_down, self.newCH_down, 0, 0)
+		self.disable()
 		pass
 
-	def XPluginStop(self):
-		pass
-	def XPluginEnable(self):
-		return 1
-	def XPluginDisable(self):
-		pass
-	def XPluginReceiveMessage(self, inFromWho, inMessage, inParam):
-		pass
 	def XPluginStart(self):
 		self.Name = "JoyButtonDataref"
 		self.Sig = "JoyButtonDatarefClass-v100.joan.PI"
@@ -286,10 +291,6 @@ class PythonInterface:
 		self.Desc = "Provides advanced joy mapping features"
 		self.axis, self.buttons, self.buttonsdr =  [], [], []
 		self.shift = 0
-		"""
-		Part of the data collection UGLY fix bellow
-		"""
-		self.old = []
 		self.sys_path = ""
 		self.sys_path = XPLMGetSystemPath(self.sys_path)
 		
@@ -360,20 +361,7 @@ class PythonInterface:
 		# Destroy commands
 		for command in self.buttons: command.destroy()
 		for command in self.buttonsdr: command.destroy()
-		# and buttons
-		'''
-		UGLY fix store old objects to stop garbage collection
-		and x-plane crashes.
-		
-		This will eat up ram on every acf change until y write a main class
-		to wrap all the X-plane calls...
-		'''
-		self.old.append(self.buttons)
-		self.old.append(self.buttonsdr)
-		self.old.append(self.axis)
-		"""
-		UUGLY fix end.
-		"""
+
 		self.buttons, self.buttonsdr, self.axis = [], [], []
 		
 	"""
@@ -419,7 +407,7 @@ class PythonInterface:
 			plane, plane_path = XPLMGetNthAircraftModel(0)
 
 			if(path.lexists(plane_path[:-len(plane)] + X737_CHECK_FILE)):
-				self.clearConfig() # if x737 clear config and wait for x737 plugin
+				# if x737 wait for x737 plugin
 				return 1
 			# Reload Config
 			self.clearConfig()	
@@ -431,6 +419,7 @@ class PythonInterface:
 		if (inFromWho == X737_ID):
 			if (inMessage == X737_INITIALIZED_MESSAGE):
 				print "x737 initiated, reloading config"
+				self.clearConfig()
 				self.config()
 			if (inMessage == X737_UNLOADED_MESSAGE):
 				print "x737 unloaded, clearing config"
