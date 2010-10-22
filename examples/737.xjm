@@ -8,8 +8,8 @@
 ;
 
 ;
-; Redefine our main configuration assigns that are valid
-; also for the x737, xJoyMap will not merge both configurations
+; Redefine our main configuration assigns that are also valid
+; for the x737, xJoyMap will not merge both configurations
 ; so copy here all the stuff that's still useful.
 
 [EFIS Map Range]

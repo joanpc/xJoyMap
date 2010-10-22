@@ -8,7 +8,6 @@ It doesn't check the config parameters so bad parameters will hang the plugin an
 
 Many thanks to Sandy Barbour for hist X-Plane Python Interface, his support, recommendations and fixes.
 
-
 Please feel free to post your patches or bugs at http://github.com/joanpc/xJoyMap
 
 Copyright (C) 2010  Joan Perez i Cauhe
@@ -45,6 +44,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
+VERSION="1.0rc1"
  
 """
 JoyAxisAssign
@@ -253,7 +253,7 @@ class PythonInterface:
     
     def XPluginStart(self):
         self.Name = "X-plane Joy Map tool"
-        self.Sig = "xJoyMap-v100.joanpc.PI"
+        self.Sig = "xJoyMap-v"+ VERSION + ".joanpc.PI"
         self.Desc = "Provides advanced joy mapping features"
         self.axis, self.buttons, self.buttonsdr =  [], [], []
         self.shift = 0
