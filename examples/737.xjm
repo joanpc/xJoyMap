@@ -7,9 +7,10 @@
 ; Installation: Copy this file to your x737 aircraft folder
 ;
 
-; ================
-; Axis to dataref 
-; ================
+;
+; Redefine our main configuration assigns that are valid
+; also for the x737, xJoyMap will not merge both configurations
+; so copy here all the stuff that's still useful.
 
 [EFIS Map Range]
 axis=4
@@ -24,12 +25,24 @@ range=6
 ;release=200
 ;round=100
 
+[Map range toggle]
+new_command=map_range
+dataref=sim/cockpit/switches/EFIS_map_range_selector
+values = 0, 1, 2, 3, 4, 5, 6
+
+[Map Mode toggle]
+new_command=map_mode
+dataref=sim/cockpit/switches/EFIS_map_submode
+values = 0, 1, 2, 3, 4
+
+
 ; =========================
 ; x737 datarefs to buttons
 ; =========================
 ;
-; See dataref.txt in your x737 folder for more datarefs
-;
+; See dataref.txt in your x737 folder for an updated
+; list of the x737 datarefs
+
 ; Some of these assignments have to be tested
 
 [x737 flight director]
@@ -67,7 +80,7 @@ new_command=x737_HDG
 dataref=x737/systems/afds/HDG
 values=0, 1
 
-[x737 VORLOC]
+[x737 VORLOC Arm]
 ; This settings will enable the VOR/LOC
 ; There's no x737 dataref to just arm it (yet)
 new_command=x737_VORLOC
@@ -95,32 +108,26 @@ values=0, 1
 ; on each aircraft change
 ;
 ; note: New commands are located at  sim/xjoymap/**new_command**
+;       if you don't specify a path for your commands sim/xjoymap/ will be added
+
+;
+; We can overwrite the heading alias created on the main config
+; and assign it to our new x737_HDG command
+
+[Heading engage]
+new_command=Heading_Engage
+main_command=x737_HDG
+
+;
+; Redefine main settings with our new 
+; x737 commands
 
 [Nav App]
 new_command=NAV_APP
-main_command=sim/xjoymap/x737_VORLOC
-shifted_command=sim/xjoymap/x737_APP
+main_command=x737_VORLOC
+shifted_command=x737_APP
 
 [Alt Hold Vertical Speed]
 new_command=vpseed_althold
-main_command=sim/xjoymap/x737_VSPEED
-shifted_command=sim/xjoymap/x737_ALTHLD
-
-; ============================
-; Button to dataref examples
-; ============================
-
-;
-; Button to dataref: toggle mode
-;
-
-[Map range toggle]
-new_command=map_range
-dataref=sim/cockpit/switches/EFIS_map_range_selector
-values = 0, 1, 2, 3, 4, 5, 6
-
-[Map Mode toggle]
-new_command=map_mode
-dataref=sim/cockpit/switches/EFIS_map_submode
-values = 0, 1, 2, 3, 4
-
+main_command=x737_VSPEED
+shifted_command=x737_ALTHLD
