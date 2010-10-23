@@ -6,7 +6,7 @@ Needs a xjoymap.ini conf files in the plugin folder and an optional xjoymap.ini 
 
 It doesn't check the config parameters so bad parameters will hang the plugin and maybe x-plane (sorry for that)
 
-Many thanks to Sandy Barbour for hist X-Plane Python Interface, his support, recommendations and fixes.
+Many thanks to Sandy Barbour for his X-Plane Python Interface, support, recommendations and fixes.
 
 Please feel free to post your patches or bugs at http://github.com/joanpc/xJoyMap
 
@@ -44,31 +44,137 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.0rc1"
+VERSION="1.0rc2"
+# Execute commands before X-plane
+INBEFORE=True
  
-"""
-JoyAxisAssign
+class xjm:
+    """
+    General utilities
+    """
+    @classmethod
+    def ConstantDataref(self, dataref, value, type = "int"):
+        pass
+        """
+        Assigns a constant dataref
+        """
+        dr, dr_get, dr_set, cast = xjm.GetDatarefMethods(dataref, type)
+        dr_set(dr, cast(value))
+        
+    @classmethod
+    def CheckParams(self, params, conf):
+        """
+        Check required params in a config section
+        """
+        for param in params:
+            if (not param in conf):
+                return False 
+        return True
+    @classmethod
+    def CreateCommand(self, command, description = 'xjoymap command: fill the description field to change this description'):
+        """
+        returns the command with the added prefix if necessary
+        """
+        command = command.strip()
+        if (not '/' in  command):
+            command = CMD_PREFIX + command
+        return XPLMCreateCommand(command, description)
 
-Assigns a joystick axis to a dataref value.
+    @classmethod
+    def GetDatarefMethods(self, dataref, type = "int"):
+        """
+        return dataref access methods for the specified type
+        it also detects array datarefs and embeded types
+        """
+        # Clear dataref
+        dataref = dataref.strip()
+        
+        if ('(' in dataref):
+            # Detect embedded type, and strip it from dataref
+            type = dataref[dataref.find('(')+1:dataref.find(')')]
+            dataref = dataref[:dataref.find('(')] + dataref[dataref.find(')')+1:]
+        
+        if ('[' in dataref):
+            # We have an array
+            range = dataref[dataref.find('[')+1:dataref.find(']')].split(':')
+            dataref = dataref[:dataref.find('[')]
+            if (len(range) < 2):
+                range.append(range[0])
+            
+            c = ArrayDatarefMethods(range[0], range[1], type)
+            get_dr = c.get_dr
+            set_dr = c.set_dr
+            cast = c.cast
+            
+        elif (type == "int"):
+            get_dr = XPLMGetDatai
+            set_dr = XPLMSetDatai
+            cast = int
+        elif (type == "float"):
+            get_dr = XPLMGetDataf
+            set_dr = XPLMSetDataf
+            cast = float  
+        elif (type == "double"):
+            get_dr = XPLMGetDatad
+            set_dr = XPLMSetDatad
+            cast = float
+        return XPLMFindDataRef(dataref), get_dr, set_dr, cast
 
-axis: joy axis #
-dataref: Dataref string
-dr_range: range of the dataref ex: 3 = 0 to 3: -3 = 30 
-dr_type: int or float
-release: soft release range to retake control if the value is changed externally 
-         usually by the autopilot.
-dr_round: Rounding done at the dataref, sometimes after setting a dataref value
-          the value is rounded by the sim. Without this setting the class will 
-          detect the rounding as an autopilot action. (ex: 100 for vertical_velocity)
-          
-http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
-"""
+class ArrayDatarefMethods:
+        """
+        Defines datref array access methods
+        """
+        def __init__(self, first, last, type):
+            self.index = int(first)
+            self.count = int(last) - int(first) + 1
+            
+            if (type == "int"):
+                self.get = XPLMGetDatavi
+                self.set = XPLMSetDatavi
+                self.cast = int
+            elif (type == "float"):
+                self.get = XPLMGetDatavf
+                self.set = XPLMSetDatavf
+                self.cast = float  
+            elif (type == "bit"):
+                get_dr = XPLMGetDatab
+                set_dr = XPLMSetDatab
+                self.cast = float
+            pass
+        def get_dr(self, dataref):
+            # We only get the first one for reference
+            list = []
+            self.get(dataref, list, self.index, 2)
+            return list[0]
+        def set_dr(self, dataref, value):
+            # Copy value
+            rvalue = []
+            for i in range(self.count): rvalue.append(self.cast(value)) 
+            return self.set(dataref, rvalue, self.index, self.count)
+ 
 class JoyAxisAssign:
-    def __init__(self, plugin, axis, dataref, dr_range, dr_type = int, release = 1, dr_round = 0):
+    """
+    JoyAxisAssign
+    
+    Assigns a joystick axis to a dataref value.
+    
+    axis: joy axis #
+    dataref: Dataref string
+    dr_range: range of the dataref ex: 3 = 0 to 3: -3 = 30 
+    dr_type: int or float
+    release: soft release range to retake control if the value is changed externally 
+             usually by the autopilot.
+    dr_round: Rounding done at the dataref, sometimes after setting a dataref value
+              the value is rounded by the sim. Without this setting the class will 
+              detect the rounding as an autopilot action. (ex: 100 for vertical_velocity)
+              
+    http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
+    """
+    def __init__(self, plugin, axis, dataref, dr_range, dr_type = "int", release = 1, dr_round = 0):
         ## Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
         self.plugin = plugin
         self.axis = int(axis)
-        self.dr_value = XPLMFindDataRef(dataref)
+        #self.dr_value = XPLMFindDataRef(dataref)
         self.dr_range = int(dr_range)
         self.dr_type = dr_type
         self.release = int(release)
@@ -80,20 +186,14 @@ class JoyAxisAssign:
         self.old_joy_value = -1
         self.old_dr_value = -1
         
-        if (dr_type == "int"):
-            self.get_dr = XPLMGetDatai
-            self.set_dr = XPLMSetDatai
-        elif (dr_type == "float"):
-            self.get_dr = XPLMGetDataf
-            self.set_dr = XPLMSetDataf    
+        self.dr_value, self.get_dr, self.set_dr, self.cast = xjm.GetDatarefMethods(dataref, dr_type)
 
     def get_current_joy(self, axis_value):
         if (self.negative):
             current = axis_value * self.dr_range * 2 - self.dr_range
         else:
             current = axis_value * self.dr_range
-        if (self.dr_type == "int"): return int(current)
-        else: return current
+        return self.cast(current)
 
     # called from the main flightloop
     def updateLoop(self, axis):
@@ -125,21 +225,24 @@ class JoyAxisAssign:
         self.old_dr_value = self.get_dr(self.dr_value)
         return 1
 
-"""
-JoyButtonAlias
-Registers button assignments
-
-parent: parent class defining the shift status
-newCommand: New command to register
-mainCommand: Default command to execute
-shiftCommand: Alternate command executed on parent.shift == True
-mainDescription: New command description
-"""
 class JoyButtonAlias:
-    def __init__(self, plugin, newCommand, mainCommand, shiftCommand = False, mainDescription = ""):
+    """
+    JoyButtonAlias
+    Registers button assignments
+    
+    parent: parent class defining the shift status
+    newCommand: New command to register
+    mainCommand: Default command to execute
+    shiftCommand: Alternate command executed on parent.shift == True
+    mainDescription: New command description
+    """
+    def __init__(self, plugin, newCommand, mainCommand, shiftCommand = False, mainDescription = "", override = False):
         ## Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
         self.plugin = plugin        
         self.mainCMD, self.shiftCMD = [], []
+        if (override): self.override = 0
+        else: self.override = 1
+        
         """
         TODO: Define more shift commands
         """
@@ -159,18 +262,18 @@ class JoyButtonAlias:
                     self.shiftCMD.append(XPLMFindCommand(CMD_PREFIX +  cmd.strip())) 
         else:  self.shiftCMD = self.mainCMD
         
-        self.newCMD = XPLMCreateCommand(CMD_PREFIX + newCommand, mainDescription)
+        self.newCMD = xjm.CreateCommand(newCommand, mainDescription)
         self.newCH = self.newCommandHandler
         
         #print "register:", id(self.plugin), self.newCMD, id(self.newCH)
-        XPLMRegisterCommandHandler(self.plugin, self.newCMD, self.newCH, 0, 0)
+        XPLMRegisterCommandHandler(self.plugin, self.newCMD, self.newCH, INBEFORE, 0)
     
     def newCommandHandler(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0):
             for cmd in self.getCommand(self.plugin.shift): XPLMCommandBegin(cmd)
         elif (inPhase == 2):
             for cmd in self.getCommand(self.plugin.shift): XPLMCommandEnd(cmd)
-        return 0
+        return self.override
     
     def getCommand(self, shift): #returns the command array for the appropriate shift status
         if (shift):
@@ -179,20 +282,21 @@ class JoyButtonAlias:
             return self.mainCMD
     def destroy(self):
         #print "destroy", id(self.plugin), self.newCMD, id(self.newCH)
-        XPLMUnregisterCommandHandler(self.plugin, self.newCMD, self.newCH, 0, 0);
+        XPLMUnregisterCommandHandler(self.plugin, self.newCMD, self.newCH, INBEFORE, 0);
         pass
-"""
-JoyButtonDataref
 
-Assigns a button to a dataref
-
-command: New command
-dataref: Dataref to interact with
-values: values to toggle
-increment: increment steep
-
-"""
 class JoyButtonDataref:
+    """
+    JoyButtonDataref
+    
+    Assigns a button to a dataref
+    
+    command: New command
+    dataref: Dataref to interact with
+    values: values to toggle
+    increment: increment steep
+    
+    """
     def __init__(self, plugin, command, dataref, type ='int', values = False, increment = False, description = ''):
         self.plugin = plugin
         self.values = []
@@ -220,18 +324,18 @@ class JoyButtonDataref:
         
         self.dataref = XPLMFindDataRef(dataref)
         # register new command
-        self.command = XPLMCreateCommand(CMD_PREFIX + command, description)
+        self.command = xjm.CreateCommand(CMD_PREFIX + command, description)
         self.newCH = self.CommandHandler
         #print "register", id(self.plugin), self.command, id(self.newCH)
-        XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, 0, 0)
+        XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
         pass
 
     def CommandHandler(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0): self.action(self.increment)
-        return 0
+        return 1
     def CommandHandler_down(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0): self.action(self.increment * -1)
-        return 0
+        return 1
     def incremental(self, increment):
         self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
         pass
@@ -243,14 +347,13 @@ class JoyButtonDataref:
         pass    
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
-        XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, 0, 0)
+        XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
         pass
 
-"""
-Main plugin
-"""
 class PythonInterface:
-    
+    """
+    Main plugin
+    """    
     def XPluginStart(self):
         self.Name = "X-plane Joy Map tool"
         self.Sig = "xJoyMap-v"+ VERSION + ".joanpc.PI"
@@ -261,9 +364,9 @@ class PythonInterface:
         self.sys_path = ""
         self.sys_path = XPLMGetSystemPath(self.sys_path)
         
-        self.shiftcommand = XPLMCreateCommand(CMD_PREFIX + "shift", "Shift button")
+        self.shiftcommand = xjm.CreateCommand("shift", "Shift button")
         self.shiftCH = self.shiftHandler
-        XPLMRegisterCommandHandler(self, self.shiftcommand, self.shiftCH, 0, 0)
+        XPLMRegisterCommandHandler(self, self.shiftcommand, self.shiftCH, INBEFORE, 0)
         
         # Datarefs
         self.axis_values_dr = XPLMFindDataRef("sim/joystick/joystick_axis_values")
@@ -276,12 +379,9 @@ class PythonInterface:
         return self.Name, self.Sig, self.Desc
 
     def config(self, startup = False):
-        # BUG Solve: Reregister shift button
-        XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, 0, 0)
-        XPLMRegisterCommandHandler(self, self.shiftcommand, self.shiftCH, 0, 0)
         # Defaults
         defaults = {'type':"int", 'release':1, 'negative': 0, 'shift': 0, 'round': 0, 'shifted_command': False, \
-                    'values': False, 'increment' : False, 'description': ''}
+                    'values': False, 'increment' : False, 'description': '', 'override': False}
         # Plane config
         # Sandy Barbour 21/10/2010 - This will only work when Xplane is up and running.
         # Calling it from XPluginStart will return garbage and could crash Xplane as the strings are full of rubbish
@@ -304,10 +404,20 @@ class PythonInterface:
                 if (not config.read(plane_path[:-len(plane)] + CONF_FILENAME)):
                     config.read(self.sys_path + 'Resources/plugins/PythonScripts/' + CONF_FILENAME)
                      
-        for section in config.sections():
+        for section in config.sections():            
             conf = dict(defaults)
+            
+            if (section == "Constants"):
+                for item in config.items(section):
+                    param = item[1].split(',')
+                    if (len(param) < 2):
+                        param[3] = 'int'
+                    xjm.ConstantDataref(param[0].strip(), param[1].strip(), param[2].strip())
+                break
+            
             for item in config.items(section):
                 conf[item[0]] = item[1]
+        
             """
             Add new classes here
             TODO: This code will be rewritten maybe each class should check their parameters..
@@ -317,29 +427,30 @@ class PythonInterface:
             # The self that you pass in here is not the self that you see inside the class.
             # The self inside the class is the class, so you need to pass in the PythonInterface class address.
             # JoyAxis Assignments
-            if  ('axis' in conf and 'dataref' in conf and 'range' in conf):
+            if  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
                 conf['dataref'], conf['range'], conf['type'], conf['release'], \
                 conf['round']))
             # JoyButtonDataref
-            elif('new_command' in conf and 'dataref' in conf):
+            elif(xjm.CheckParams(['new_command', 'dataref'], conf)):
                 self.buttonsdr.append(JoyButtonDataref(self, conf['new_command'], conf['dataref'], conf['type'],\
                 conf['values'], int(conf['increment']), section))
-            elif ('new_command' in conf and 'main_command' in conf):
+            # joyButtonAlias
+            elif (xjm.CheckParams(['new_command', 'main_command'], conf)):
                 alias_commands.append(conf) # store alias
         # Alias should be defined at the end
         for conf in alias_commands:
             self.buttons.append(JoyButtonAlias(self, conf['new_command'], conf['main_command'], \
-            conf['shifted_command'], section))
+            conf['shifted_command'], section, conf['override']))
             
         # Reenable flightloop if we have axis defined   
         if (len(self.axis)): XPLMSetFlightLoopCallbackInterval(self.floop, -1, 0, 0)
         print "config end"
             
-    """
-    Clears all the assignments and disables the flightloop
-    """
     def clearConfig(self):
+        """
+        Clears all the assignments and disables the flightloop
+        """
         print "clearConfig start"
         # Disable flightloop
         XPLMSetFlightLoopCallbackInterval(self.floop, 0, 0, 0)
@@ -350,22 +461,20 @@ class PythonInterface:
         self.buttons, self.buttonsdr, self.axis = [], [], []
         print "clearConfig end"
         
-    """
-    Defines the shift status
-    """
     def shiftHandler(self, inCommand, inPhase, inRefcon):
+        """
+        Defines the shift status
+        """
         if (inPhase == 0):
             self.shift = 1
-            print "shift up"
         elif (inPhase == 2):
             self.shift = 0
-            print "shift down"
         return 1
 
-    """
-    Main flight loop: calls axis classes .updateloop
-    """
     def floopCallback(self, elapsedMe, elapsedSim, counter, refcon):
+        """
+        Main flight loop: calls axis classes .updateloop
+        """
         # Get all axis
         axis_values = []
         XPLMGetDatavf(self.axis_values_dr, axis_values , 0 ,100)        
@@ -376,7 +485,7 @@ class PythonInterface:
     def XPluginStop(self):
         self.clearConfig()
         XPLMUnregisterFlightLoopCallback(self, self.floop, 0)
-        XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, 0, 0)
+        XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, INBEFORE, 0)
         pass
     def XPluginEnable(self):
         return 1

@@ -4,7 +4,7 @@
 ; This file need more work but it's a good example
 ; Please share your configuration files with the community
 ;
-; Installation: Copy this file to your x737 aircraft folder
+; INSTALLATION: Copy this file to your x737 aircraft folder
 ;
 
 ;
@@ -97,6 +97,11 @@ new_command=x737_CMDA
 dataref=x737/systems/afds/CMD_A
 values=0, 1
 
+[x737 LVLCHG]
+new_command=x737_LVLCHG
+dataref=x737/systems/afds/LVLCHG
+values=0,1
+
 
 ; ==============================
 ; Button assign examples
@@ -119,10 +124,10 @@ new_command=Heading_Engage
 main_command=x737_HDG
 
 ;
-; Redefine main settings with our new 
-; x737 commands
+; Redefine our main shifted commands 
+; with our new x737 commands
 
-[Nav App]
+[Nav App shifted]
 new_command=NAV_APP
 main_command=x737_VORLOC
 shifted_command=x737_APP
@@ -131,3 +136,42 @@ shifted_command=x737_APP
 new_command=vpseed_althold
 main_command=x737_VSPEED
 shifted_command=x737_ALTHLD
+
+;
+; We can also override X-Plane default commands
+; specifying the full path of the X-Plane command in new_command parameter
+; and an override=True to tell X-Plane to ignore the command 
+
+[Autopilot VOR/LOC arm x737]
+new_command=sim/autopilot/NAV
+main_command=x737_VORLOC
+override=True
+
+[Autopilot Level Change x737]
+new_commdn=sim/autopilot/level_change
+main_command=x737_LVLCHG
+override=True
+
+[Autopilot Vertical Speed x737]
+new_command=sim/autopilot/vertical_speed
+main_command=x737_VSPEED
+override=True
+
+[Autopilot Approach x737]
+new_command=sim/autopilot/approach
+main_command=x737_APP
+override=True
+
+[Autopilot Alt Hold]
+new_command=sim/autopilot/altitude_hold
+main_command=x737_ALTHLD
+override=True
+
+
+;
+; Note to plane builders: button2dataref modes doesn't support overrides
+; It's better to define your custom commands first,
+; and then assign them to general X-plane commands to allow users to better understand 
+; .xjm files and make their own mappings at the end of the file.
+; (just like in this config file :)
+;

@@ -5,10 +5,11 @@ advanced combined commands
 
 Implements the following modes:
 
-axis2dataref:     maps a joystick axis to a dataref
-button2dataref    incrementa:l increment / decrement a dataref pressing a joy button
-button2dataref    toggle: toggle between predefined values on button press
-buttonAlias:      creates Alias, combo and "shifted" commands
+axis2dataref:         maps a joystick axis to a dataref
+button2dataref        incrementa:l increment / decrement a dataref pressing a joy button
+button2dataref        toggle: toggle between predefined values on button press
+buttonAlias:          creates Alias, combo and "shifted" commands
+Constant dataref:     Define constant values for datarefs on plane load (useful to set the fov for example)
 
 It should be useful to:
 
@@ -22,6 +23,7 @@ It should be useful to:
   to write all the button to dataref communication.
 
 Please share your config files with the community!!
+I will be more than pleased to add your config files to the examples folder; contact me!
 
 Please feel free to post your patches, bugs and contributions
 at http://github.com/joanpc/xJoyMap
@@ -53,21 +55,30 @@ Check the config files in the examples folder for more info.
 Future plans
 =============
 
-Constant dataref:     Define constant values for datarefs on plane load (useful to set the fov for example)
 Incremental repeat:   Repeat increment while the button is pressed
 Switch mode:          Useful for hardware switches (pressed_value, unpressed_value)
 More shift commands:  To be able to map the saitek x52 mode switch  
 
 *Maybe*
 shift axis:           Define axis assignments for each shift state
-override yoke   
+override yoke
+override x-plane buttons
 
 ======
 Thanks
 ======
 
-Many thanks to Sandy Barbour for the awesome X-Plane Phyton Interface and, his support, recommendations and fixes. 
-And all the x-plane.org community.
+Many thanks to Sandy Barbour for the awesome X-Plane Phyton Interface,
+his support, recommendations and fixes. 
+
+All the x-plane.org community.
+
+==========
+Disclaimer
+==========
+
+As you may have noticed English is not my main language :) So if you find typos o better ways to describe thinks
+please send me your corrections and recommendations. 
 
 
 Enjoy
