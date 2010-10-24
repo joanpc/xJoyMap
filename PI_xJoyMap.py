@@ -36,6 +36,17 @@ import ConfigParser
 from os import path
 
 """
+Enables debug messages to help finding problems with config files
+levels:
+    0    be quiet
+    1    config read/clear
+    2    loaded sections
+    3    Create commands / Get Datarefs
+
+"""
+DEBUG=0
+
+"""
 Some constants
 """
 CMD_PREFIX = 'sim/xjoymap/'    #prefix for new commands
@@ -76,6 +87,7 @@ class xjm:
         returns the command with the added prefix if necessary
         """
         command = command.strip()
+        xjm.debug("Create command: " + command, 3)
         if (not '/' in  command):
             command = CMD_PREFIX + command
         return XPLMCreateCommand(command, description)
@@ -88,6 +100,8 @@ class xjm:
         """
         # Clear dataref
         dataref = dataref.strip()
+        
+        xjm.debug("Get dataref: " + dataref, 3)
         
         if ('(' in dataref):
             # Detect embedded type, and strip it from dataref
@@ -119,6 +133,14 @@ class xjm:
             set_dr = XPLMSetDatad
             cast = float
         return XPLMFindDataRef(dataref), get_dr, set_dr, cast
+    
+    @classmethod
+    def debug(self, message, level = 1):
+        """
+        prints a debug message
+        """
+        if (DEBUG >= level): print message
+        pass
 
 class ArrayDatarefMethods:
         """
@@ -406,7 +428,7 @@ class PythonInterface:
                      
         for section in config.sections():            
             conf = dict(defaults)
-            
+            xjm.debug("[" + section + "]", 2)
             if (section == "Constants"):
                 for item in config.items(section):
                     param = item[1].split(',')
@@ -445,13 +467,13 @@ class PythonInterface:
             
         # Reenable flightloop if we have axis defined   
         if (len(self.axis)): XPLMSetFlightLoopCallbackInterval(self.floop, -1, 0, 0)
-        print "config end"
+        xjm.debug("config end")
             
     def clearConfig(self):
         """
         Clears all the assignments and disables the flightloop
         """
-        print "clearConfig start"
+        xjm.debug("clearConfig start")
         # Disable flightloop
         XPLMSetFlightLoopCallbackInterval(self.floop, 0, 0, 0)
         # Destroy commands
@@ -459,7 +481,7 @@ class PythonInterface:
         for command in self.buttonsdr: command.destroy()
         # and buttons
         self.buttons, self.buttonsdr, self.axis = [], [], []
-        print "clearConfig end"
+        xjm.debug("clearConfig end")
         
     def shiftHandler(self, inCommand, inPhase, inRefcon):
         """
@@ -513,9 +535,9 @@ class PythonInterface:
         X737_ID = XPLMFindPluginBySignature('bs.x737.plugin')
         if (inFromWho == X737_ID):
             if (inMessage == X737_INITIALIZED_MESSAGE):
-                print "x737 plug-in initiated, reloading config"
+                xjm.debug("x737 plug-in initiated, reloading config")
                 self.config()
             elif (inMessage == X737_UNLOADED_MESSAGE):
-                print "x737 plug-in unloaded, clearing config"
+                xjm.debug("x737 plug-in unloaded, clearing config")
                 self.clearConfig()
         pass

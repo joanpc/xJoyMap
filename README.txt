@@ -5,11 +5,11 @@ advanced combined commands
 
 Implements the following modes:
 
-axis2dataref:         maps a joystick axis to a dataref
-button2dataref        incrementa:l increment / decrement a dataref pressing a joy button
-button2dataref        toggle: toggle between predefined values on button press
-buttonAlias:          creates Alias, combo and "shifted" commands
-Constant dataref:     Define constant values for datarefs on plane load (useful to set the fov for example)
+axis2dataref:               maps a joystick axis to a dataref
+button2dataref incremental: increment / decrement a dataref pressing a joy button
+button2dataref toggle:      toggle between predefined values on button press
+buttonAlias:                creates Alias, combo and "shifted" commands and allows to override X-Plane default commands.
+Constant dataref:           Define constant values for datarefs on plane load (useful to set the fov for example)
 
 It should be useful to:
 
@@ -43,7 +43,8 @@ and comments to help you.
 
 If you want specific commands for an aircraft
 copy xJoyMap.ini to the aircraft folder and modify it.
-You can also use aircraftname.xjm in your aircraft folder.
+You can also use aircraftname.xjm in your aircraft folder,
+see the 737.xjm in the examples folder.
 
 ===================
 Configuration/Help
@@ -60,9 +61,8 @@ Switch mode:          Useful for hardware switches (pressed_value, unpressed_val
 More shift commands:  To be able to map the saitek x52 mode switch  
 
 *Maybe*
+override yoke:
 shift axis:           Define axis assignments for each shift state
-override yoke
-override x-plane buttons
 
 ======
 Thanks
@@ -71,14 +71,14 @@ Thanks
 Many thanks to Sandy Barbour for the awesome X-Plane Phyton Interface,
 his support, recommendations and fixes. 
 
-All the x-plane.org community.
+All the x-plane.org community for releasing so quality stuff for free :)
 
 ==========
 Disclaimer
 ==========
 
-As you may have noticed English is not my main language :) So if you find typos o better ways to describe thinks
-please send me your corrections and recommendations. 
+As you may have noticed English is not my main language :) So if you find spelling
+errors o better ways to describe thinks, please send me your corrections and recommendations. 
 
 
 Enjoy

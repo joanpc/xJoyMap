@@ -2,7 +2,7 @@
 ; PL_xJoyMap.py Example configuration file for the x737
 ;
 ; This file need more work but it's a good example
-; Please share your configuration files with the community
+; Remember to share your configuration files with the community! :)
 ;
 ; INSTALLATION: Copy this file to your x737 aircraft folder
 ;
@@ -18,12 +18,12 @@ dataref=sim/cockpit/switches/EFIS_map_range_selector
 range=6
 
 ; Not working 
-;[Vertical Speed]
-;axis=5
-;dataref=x737/systems/afds/VS_vvi
-;range=-4000
-;release=200
-;round=100
+[Vertical Speed]
+axis=5
+dataref=x737/systems/afds/VS_vvi(float)
+range=-4000
+release=200
+round=100
 
 [Map range toggle]
 new_command=map_range
@@ -47,10 +47,10 @@ values = 0, 1, 2, 3, 4
 
 [x737 flight director]
 new_command=x737_fdirector
-dataref=x737/systems/afds/fd_master
-values=0, 1, 2
+dataref=x737/systems/afds/fdA_status
+values=0, 1
 
-[x737 flight director]
+[x737 ATRH arm]
 new_command=x737_atrh
 dataref=x737/systems/athr/athr_armed
 values=0, 1
@@ -60,7 +60,7 @@ new_command=x737_N1
 dataref=x737/systems/athr/N1_mode
 values=0,1
 
-[x737 Nav]
+[x737 LNAV arm]
 new_command=x737_NAV
 dataref=x737/systems/afds/LNAV_arm
 values=0, 1
@@ -81,8 +81,7 @@ dataref=x737/systems/afds/HDG
 values=0, 1
 
 [x737 VORLOC Arm]
-; This settings will enable the VOR/LOC
-; There's no x737 dataref to just arm it (yet)
+; At this moment x737 doesn't implement just arming the vor/loc from a dataref.aaa
 new_command=x737_VORLOC
 dataref=x737/systems/afds/VORLOC
 values=0,1
@@ -104,13 +103,13 @@ values=0,1
 
 
 ; ==============================
-; Button assign examples
+; Button assign overrides
 ; ==============================
 
 ;
 ; You can redefine Alias commands  already defined in the main config 
 ; using the commands created above so you don't need to reassign buttons 
-; on each aircraft change
+; on each aircraft change. You can also override X-Plane default commands.
 ;
 ; note: New commands are located at  sim/xjoymap/**new_command**
 ;       if you don't specify a path for your commands sim/xjoymap/ will be added
@@ -141,6 +140,22 @@ shifted_command=x737_ALTHLD
 ; We can also override X-Plane default commands
 ; specifying the full path of the X-Plane command in new_command parameter
 ; and an override=True to tell X-Plane to ignore the command 
+; Remember: do not repeat sections names!
+
+[Autopilot Auto Throttle toggle]
+new_command=sim/autopilot/autothrottle_toggle
+main_command=x737_atrh
+override=True
+
+[Autopilot Engage]
+new_command=sim/autopilot/servos_toggle
+main_command=x737_CMDA
+override=True
+
+[Autopilot Heading engage]
+new_command=sim/autopilot/heading
+main_command=x737_HDG
+override=True
 
 [Autopilot VOR/LOC arm x737]
 new_command=sim/autopilot/NAV
@@ -167,11 +182,15 @@ new_command=sim/autopilot/altitude_hold
 main_command=x737_ALTHLD
 override=True
 
+[Autopilot FLight Director toggle]
+new_command=sim/autopilot/fdir_toggle
+main_command=x737_fdirector
+override=True
 
 ;
 ; Note to plane builders: button2dataref modes doesn't support overrides
 ; It's better to define your custom commands first,
 ; and then assign them to general X-plane commands to allow users to better understand 
-; .xjm files and make their own mappings at the end of the file.
+; .xjm files and make their own custom mappings at the end of the file.
 ; (just like in this config file :)
 ;
