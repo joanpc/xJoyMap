@@ -55,6 +55,11 @@ new_command=x737_atrh
 dataref=x737/systems/athr/athr_armed
 values=0, 1
 
+[x737 MCPSPD]
+new_command=x737_MCPSPD
+dataref=x737/systems/athr/MCPSPD_mode
+values=0,1
+
 [x737 N1]
 new_command=x737_N1
 dataref=x737/systems/athr/N1_mode
@@ -94,6 +99,11 @@ values=1
 [x737 CMD_A]
 new_command=x737_CMDA
 dataref=x737/systems/afds/CMD_A
+values=0, 1
+
+[x737 CMD_B]
+new_command=x737_CMDB
+dataref=x737/systems/afds/CMD_B
 values=0, 1
 
 [x737 LVLCHG]
@@ -144,12 +154,14 @@ shifted_command=x737_ALTHLD
 
 [Autopilot Auto Throttle toggle]
 new_command=sim/autopilot/autothrottle_toggle
-main_command=x737_atrh
+main_command=x737_MCPSPD
+shifted_command=x737_atrh
 override=True
 
 [Autopilot Engage]
 new_command=sim/autopilot/servos_toggle
 main_command=x737_CMDA
+shifted_command=x737_CMDB
 override=True
 
 [Autopilot Heading engage]

@@ -205,6 +205,7 @@ class JoyAxisAssign:
             self.dr_range = self.dr_range * -1
         else: self.negative = False
         self.dr_round = int(dr_round)
+        if (self.dr_round != 0): self.dr_round = self.dr_round / 2
         self.old_joy_value = -1
         self.old_dr_value = -1
         
@@ -319,13 +320,17 @@ class JoyButtonDataref:
     increment: increment steep
     
     """
-    def __init__(self, plugin, command, dataref, type ='int', values = False, increment = False, description = ''):
+    def __init__(self, plugin, command, dataref, type ='int', values = False, increment = False, repeat = False, description = ''):
         self.plugin = plugin
         self.values = []
+        self.repeat = repeat  
         if (increment != False): 
             self.action = self.incremental
             self.increment = int(increment)
-            self.mode = 'incremental'
+            self.mode = 'incremental'      
+            if(self.repeat):
+                self.repeatCH = self.RepeatCallback
+                XPLMRegisterFlightLoopCallback(self.plugin, self.repeatCH, 0, 0)
         else: 
             self.action = self.toggle
             self.increment = 1
@@ -337,23 +342,21 @@ class JoyButtonDataref:
                 self.valuesi = 0
                 self.valuesl = len(self.values) - 1
                 self.mode = 'toggle'
-        if (type == 'int'):
-            self.getdataref = XPLMGetDatai
-            self.setdataref = XPLMSetDatai
-        else:
-            self.getdataref = XPLMGetDataf
-            self.setdataref = XPLMSetDataf
+
+        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
         
-        self.dataref = XPLMFindDataRef(dataref)
         # register new command
-        self.command = xjm.CreateCommand(CMD_PREFIX + command, description)
+        self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
         #print "register", id(self.plugin), self.command, id(self.newCH)
         XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
-        pass
 
     def CommandHandler(self, inCommand, inPhase, inRefcon):
-        if (inPhase == 0): self.action(self.increment)
+        if (inPhase == 0):  
+            self.action(self.increment)
+            if (self.repeat): XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0.3, 1, 0)
+        if (inPhase == 2 and self.repeat):
+            XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0, 0, 0)
         return 1
     def CommandHandler_down(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0): self.action(self.increment * -1)
@@ -361,6 +364,13 @@ class JoyButtonDataref:
     def incremental(self, increment):
         self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
         pass
+    def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
+        """
+        Performs increment repetitions
+        """
+        self.action(self.increment)
+        return 0.02
+
     def toggle(self, increment):
         self.valuesi += increment
         if (self.valuesi > self.valuesl): self.valuesi = 0
@@ -370,6 +380,8 @@ class JoyButtonDataref:
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
         XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
+        if (self.repeat):
+            XPLMUnregisterFlightLoopCallback(self.plugin, self.repeatCH, 0)
         pass
 
 class PythonInterface:
@@ -403,7 +415,7 @@ class PythonInterface:
     def config(self, startup = False):
         # Defaults
         defaults = {'type':"int", 'release':1, 'negative': 0, 'shift': 0, 'round': 0, 'shifted_command': False, \
-                    'values': False, 'increment' : False, 'description': '', 'override': False}
+                    'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False}
         # Plane config
         # Sandy Barbour 21/10/2010 - This will only work when Xplane is up and running.
         # Calling it from XPluginStart will return garbage and could crash Xplane as the strings are full of rubbish
@@ -456,7 +468,7 @@ class PythonInterface:
             # JoyButtonDataref
             elif(xjm.CheckParams(['new_command', 'dataref'], conf)):
                 self.buttonsdr.append(JoyButtonDataref(self, conf['new_command'], conf['dataref'], conf['type'],\
-                conf['values'], int(conf['increment']), section))
+                conf['values'], int(conf['increment']), conf['repeat'],section))
             # joyButtonAlias
             elif (xjm.CheckParams(['new_command', 'main_command'], conf)):
                 alias_commands.append(conf) # store alias
@@ -466,7 +478,7 @@ class PythonInterface:
             conf['shifted_command'], section, conf['override']))
             
         # Reenable flightloop if we have axis defined   
-        if (len(self.axis)): XPLMSetFlightLoopCallbackInterval(self.floop, -1, 0, 0)
+        if (len(self.axis)): XPLMSetFlightLoopCallbackInterval(self, self.floop, -1, 0, 0)
         xjm.debug("config end")
             
     def clearConfig(self):
@@ -475,7 +487,7 @@ class PythonInterface:
         """
         xjm.debug("clearConfig start")
         # Disable flightloop
-        XPLMSetFlightLoopCallbackInterval(self.floop, 0, 0, 0)
+        XPLMSetFlightLoopCallbackInterval(self, self.floop, 0, 0, 0)
         # Destroy commands
         for command in self.buttons: command.destroy()
         for command in self.buttonsdr: command.destroy()
@@ -520,7 +532,7 @@ class PythonInterface:
         """
         if (inFromWho == XPLM_PLUGIN_XPLANE):
             # On plane load
-            if (inMessage == XPLM_MSG_PLANE_LOADED and inParam == XPLM_PLUGIN_XPLANE): # On aircraft change
+            if (inParam == XPLM_PLUGIN_XPLANE and inMessage == XPLM_MSG_PLANE_LOADED ): # On aircraft change
                 plane, plane_path = XPLMGetNthAircraftModel(0)
                 """
                 Detect x737 load, clear config and wait for x737 plugin
