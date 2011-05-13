@@ -55,7 +55,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.0rc2"
+VERSION="1.0rc3"
 # Execute commands before X-plane
 INBEFORE=True
  
@@ -132,7 +132,11 @@ class xjm:
             get_dr = XPLMGetDatad
             set_dr = XPLMSetDatad
             cast = float
-        return XPLMFindDataRef(dataref), get_dr, set_dr, cast
+
+        dr = XPLMFindDataRef(dataref)
+        if dr == False:
+            xjm.debug("Can't find " + dr + " DataRef", -1);
+        return dr, get_dr, set_dr, cast
     
     @classmethod
     def debug(self, message, level = 1):
@@ -142,37 +146,37 @@ class xjm:
         if (DEBUG >= level): print message
         pass
 
-class ArrayDatarefMethods:
-        """
-        Defines datref array access methods
-        """
-        def __init__(self, first, last, type):
-            self.index = int(first)
-            self.count = int(last) - int(first) + 1
-            
-            if (type == "int"):
-                self.get = XPLMGetDatavi
-                self.set = XPLMSetDatavi
-                self.cast = int
-            elif (type == "float"):
-                self.get = XPLMGetDatavf
-                self.set = XPLMSetDatavf
-                self.cast = float  
-            elif (type == "bit"):
-                get_dr = XPLMGetDatab
-                set_dr = XPLMSetDatab
-                self.cast = float
-            pass
-        def get_dr(self, dataref):
-            # We only get the first one for reference
-            list = []
-            self.get(dataref, list, self.index, 2)
-            return list[0]
-        def set_dr(self, dataref, value):
-            # Copy value
-            rvalue = []
-            for i in range(self.count): rvalue.append(self.cast(value)) 
-            return self.set(dataref, rvalue, self.index, self.count)
+    class ArrayDatarefMethods:
+            """
+            Defines datref array access methods
+            """
+            def __init__(self, first, last, type):
+                self.index = int(first)
+                self.count = int(last) - int(first) + 1
+                
+                if (type == "int"):
+                    self.get = XPLMGetDatavi
+                    self.set = XPLMSetDatavi
+                    self.cast = int
+                elif (type == "float"):
+                    self.get = XPLMGetDatavf
+                    self.set = XPLMSetDatavf
+                    self.cast = float  
+                elif (type == "bit"):
+                    get_dr = XPLMGetDatab
+                    set_dr = XPLMSetDatab
+                    self.cast = float
+                pass
+            def get_dr(self, dataref):
+                # We only get the first one for reference
+                list = []
+                self.get(dataref, list, self.index, 2)
+                return list[0]
+            def set_dr(self, dataref, value):
+                # Copy value
+                rvalue = []
+                for i in range(self.count): rvalue.append(self.cast(value)) 
+                return self.set(dataref, rvalue, self.index, self.count)
  
 class JoyAxisAssign:
     """
@@ -196,7 +200,6 @@ class JoyAxisAssign:
         ## Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
         self.plugin = plugin
         self.axis = int(axis)
-        #self.dr_value = XPLMFindDataRef(dataref)
         self.dr_range = int(dr_range)
         self.dr_type = dr_type
         self.release = int(release)
@@ -358,12 +361,15 @@ class JoyButtonDataref:
         if (inPhase == 2 and self.repeat):
             XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0, 0, 0)
         return 1
+    
     def CommandHandler_down(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0): self.action(self.increment * -1)
         return 1
+    
     def incremental(self, increment):
         self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
         pass
+    
     def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
         """
         Performs increment repetitions
@@ -384,13 +390,38 @@ class JoyButtonDataref:
             XPLMUnregisterFlightLoopCallback(self.plugin, self.repeatCH, 0)
         pass
 
+class JoySwitch:
+    def __init__(self, plugin, new_command, description, dataref, type='int', onval=1, offval=0):
+        self.plugin = plugin
+        self.onval = onval
+        self.offval = offval
+        self.command = new_command
+        
+        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
+
+        # register new command
+        self.command = xjm.CreateCommand(self.command, description)
+        self.newCH = self.CommandHandler
+        #print "register", id(self.plugin), self.command, id(self.newCH)
+        XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
+
+    def CommandHandler(self, inCommand, inPhase, inRefcon):
+        if (inPhase == 0):  
+            self.setdataref(self.dataref, self.cast(self.onval))
+        if (inPhase == 2):
+            self.setdataref(self.dataref, self.cast(self.offval))
+        return 1
+
+    def destroy(self):
+        XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
+
 class PythonInterface:
     """
     Main plugin
     """    
     def XPluginStart(self):
-        self.Name = "X-plane Joy Map tool"
-        self.Sig = "xJoyMap-v"+ VERSION + ".joanpc.PI"
+        self.Name = "X-plane Joy Map tool - " + VERSION
+        self.Sig = "xJoyMap-v.joanpc.PI"
         self.Desc = "Provides advanced joy mapping features"
         self.axis, self.buttons, self.buttonsdr =  [], [], []
         self.shift = 0
@@ -465,6 +496,9 @@ class PythonInterface:
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
                 conf['dataref'], conf['range'], conf['type'], conf['release'], \
                 conf['round']))
+            # JoySwitch
+            elif (xjm.CheckParams(['new_command', 'on_value', 'off_value', 'dataref'], conf)):
+                self.buttons.append(JoySwitch(self, conf['new_command'], conf['description'], conf['dataref'], conf['type'], conf['on_value'], conf['off_value']))
             # JoyButtonDataref
             elif(xjm.CheckParams(['new_command', 'dataref'], conf)):
                 self.buttonsdr.append(JoyButtonDataref(self, conf['new_command'], conf['dataref'], conf['type'],\
@@ -520,9 +554,10 @@ class PythonInterface:
         self.clearConfig()
         XPLMUnregisterFlightLoopCallback(self, self.floop, 0)
         XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, INBEFORE, 0)
-        pass
+    
     def XPluginEnable(self):
         return 1
+    
     def XPluginDisable(self):
         pass
 
@@ -541,8 +576,10 @@ class PythonInterface:
                     self.clearConfig()
                     return
                 else:
-                    self.clearConfig()
-                    self.config()
+                    # Disabled until the new release of the PythonInterface
+                    #self.clearConfig()
+                    #self.config()
+                    pass
         # x737 Plug-in loaded, load config
         X737_ID = XPLMFindPluginBySignature('bs.x737.plugin')
         if (inFromWho == X737_ID):
@@ -552,4 +589,6 @@ class PythonInterface:
             elif (inMessage == X737_UNLOADED_MESSAGE):
                 xjm.debug("x737 plug-in unloaded, clearing config")
                 self.clearConfig()
+        else:
+            print inFromWho, inMessage
         pass

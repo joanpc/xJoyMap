@@ -35,6 +35,21 @@ new_command=map_mode
 dataref=sim/cockpit/switches/EFIS_map_submode
 values = 0, 1, 2, 3, 4
 
+[Increment Heading]
+new_command=heading_up
+dataref=sim/cockpit/autopilot/heading_mag
+description=Heading 
+increment=1
+type=float
+repeat=True
+
+[Decrement Heading]
+new_command=heading_down
+dataref=sim/cockpit/autopilot/heading_mag
+description=Heading 
+increment=-1
+type=float
+repeat=True
 
 ; =========================
 ; x737 datarefs to buttons
@@ -111,6 +126,21 @@ new_command=x737_LVLCHG
 dataref=x737/systems/afds/LVLCHG
 values=0,1
 
+[x737 Altitude up]
+new_command=x737_alt_up
+dataref=x737/systems/afds/ALTHLD_baroalt
+description=Heading 
+increment=100
+type=float
+repeat=True
+
+[x737 Altitude down]
+new_command=x737_alt_down
+dataref=x737/systems/afds/ALTHLD_baroalt
+description=Heading 
+increment=-100
+type=float
+repeat=True
 
 ; ==============================
 ; Button assign overrides
@@ -199,6 +229,15 @@ new_command=sim/autopilot/fdir_toggle
 main_command=x737_fdirector
 override=True
 
+[Autopilot altitude down]
+new_command=sim/autopilot/altitude_up
+main_command=x737_alt_up
+override=True
+
+[Autopilot altitude up]
+new_command=sim/autopilot/altitude_down
+main_command=x737_alt_down
+override=True
 ;
 ; Note to plane builders: button2dataref modes doesn't support overrides
 ; It's better to define your custom commands first,
