@@ -36,18 +36,10 @@ dataref=sim/cockpit/switches/EFIS_map_submode
 values = 0, 1, 2, 3, 4
 
 [Increment Heading]
-new_command=heading_up
+new_command=heading
 dataref=sim/cockpit/autopilot/heading_mag
 description=Heading 
 increment=1
-type=float
-repeat=True
-
-[Decrement Heading]
-new_command=heading_down
-dataref=sim/cockpit/autopilot/heading_mag
-description=Heading 
-increment=-1
 type=float
 repeat=True
 
