@@ -326,6 +326,8 @@ class JoyButtonDataref:
         self.plugin = plugin
         self.values = []
         self.repeat = repeat
+        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
+        
         if (increment != False):
             self.action = self.incremental
             self.increment = int(increment)
@@ -342,13 +344,11 @@ class JoyButtonDataref:
             if (values): 
                 nvalues = []
                 for value in values.split(','):
-                    nvalues.append(int(value.strip()))
+                    nvalues.append(self.cast(value.strip()))
                 self.values = nvalues
                 self.valuesi = 0
                 self.valuesl = len(self.values) - 1
                 self.mode = 'toggle'
-
-        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
         
         # register new commands
         self.command = xjm.CreateCommand(command, description)
