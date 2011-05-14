@@ -1,4 +1,4 @@
-xJoyMap 1.0rc1:
+xJoyMap 1.0rc5:
 
 xJoyMap wants to be a simple way to modify datarefs with your joystick and/or creating
 advanced combined commands
@@ -8,6 +8,7 @@ Implements the following modes:
 axis2dataref:               maps a joystick axis to a dataref
 button2dataref incremental: increment / decrement a dataref pressing a joy button
 button2dataref toggle:      toggle between predefined values on button press
+button2dataref Switch mode: Useful for hardware switches (pressed_value, unpressed_value)
 buttonAlias:                creates Alias, combo and "shifted" commands and allows to override X-Plane default commands.
 Constant dataref:           Define constant values for datarefs on plane load (useful to set the fov for example)
 
@@ -55,9 +56,6 @@ Check the config files in the examples folder for more info.
 =============
 Future plans
 =============
-
-Incremental repeat:   Repeat increment while the button is pressed
-Switch mode:          Useful for hardware switches (pressed_value, unpressed_value)
 More shift commands:  To be able to map the saitek x52 mode switch  
 
 *Maybe*
