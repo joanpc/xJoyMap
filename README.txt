@@ -73,14 +73,6 @@ his support, recommendations and fixes.
 
 All the x-plane.org community for releasing so quality stuff for free :)
 
-==========
-Disclaimer
-==========
-
-As you may have noticed English is not my main language :) So if you find spelling
-errors o better ways to describe thinks, please send me your corrections and recommendations. 
-
-
 Enjoy
 Joan
 

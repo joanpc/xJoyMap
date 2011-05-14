@@ -34,7 +34,6 @@ from XPLMPlanes import *
 from XPLMPlugin import *
 import ConfigParser
 from os import path
-
 """
 Enables debug messages to help finding problems with config files
 levels:
@@ -323,11 +322,11 @@ class JoyButtonDataref:
     increment: increment steep
     
     """
-    def __init__(self, plugin, command, dataref, type ='int', values = False, increment = False, repeat = False, description = ''):
+    def __init__(self, plugin, command, dataref, type ='int', values = False, increment = False, repeat = False, loop = True ,description = ''):
         self.plugin = plugin
         self.values = []
-        self.repeat = repeat  
-        if (increment != False): 
+        self.repeat = repeat
+        if (increment != False):
             self.action = self.incremental
             self.increment = int(increment)
             self.mode = 'incremental'      
@@ -335,7 +334,10 @@ class JoyButtonDataref:
                 self.repeatCH = self.RepeatCallback
                 XPLMRegisterFlightLoopCallback(self.plugin, self.repeatCH, 0, 0)
         else: 
-            self.action = self.toggle
+            if loop:
+                self.action = self.toggle_loop
+            else:
+                self.action = self.toggle  
             self.increment = 1
             if (values): 
                 nvalues = []
@@ -348,22 +350,34 @@ class JoyButtonDataref:
 
         self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
         
-        # register new command
+        # register new commands
         self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
+        self.command_down = xjm.CreateCommand(command + '_down' , description)
+        self.newCH_down = self.CommandHandler_down
+        
         #print "register", id(self.plugin), self.command, id(self.newCH)
         XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
+        XPLMRegisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
 
     def CommandHandler(self, inCommand, inPhase, inRefcon):
-        if (inPhase == 0):  
+        if (inPhase == 0):
             self.action(self.increment)
-            if (self.repeat): XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0.3, 1, 0)
+            if (self.repeat): 
+                self.rincrement = self.increment
+                XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0.3, 1, 0)
         if (inPhase == 2 and self.repeat):
             XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0, 0, 0)
         return 1
     
     def CommandHandler_down(self, inCommand, inPhase, inRefcon):
-        if (inPhase == 0): self.action(self.increment * -1)
+        if (inPhase == 0):
+            self.action(self.increment * -1)
+            if (self.repeat): 
+                self.rincrement = self.increment * -1
+                XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0.3, 1, 0)
+        if (inPhase == 2 and self.repeat):
+            XPLMSetFlightLoopCallbackInterval(self.plugin, self.repeatCH, 0, 0, 0)
         return 1
     
     def incremental(self, increment):
@@ -374,15 +388,20 @@ class JoyButtonDataref:
         """
         Performs increment repetitions
         """
-        self.action(self.increment)
+        self.action(self.rincrement)
         return 0.02
 
-    def toggle(self, increment):
+    def toggle_loop(self, increment):
         self.valuesi += increment
         if (self.valuesi > self.valuesl): self.valuesi = 0
         if (self.valuesi < 0): self.valuesi = self.valuesl
         self.setdataref(self.dataref, self.values[self.valuesi])
-        pass    
+    
+    def toggle(self, increment):
+        if (self.valuesl >= (self.valuesi + increment) >= 0):
+            self.valuesi += increment
+            self.setdataref(self.dataref, self.values[self.valuesi])
+    
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
         XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
@@ -446,7 +465,7 @@ class PythonInterface:
     def config(self, startup = False):
         # Defaults
         defaults = {'type':"int", 'release':1, 'negative': 0, 'shift': 0, 'round': 0, 'shifted_command': False, \
-                    'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False}
+                    'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False, 'loop': 'True'}
         # Plane config
         # Sandy Barbour 21/10/2010 - This will only work when Xplane is up and running.
         # Calling it from XPluginStart will return garbage and could crash Xplane as the strings are full of rubbish
@@ -502,7 +521,7 @@ class PythonInterface:
             # JoyButtonDataref
             elif(xjm.CheckParams(['new_command', 'dataref'], conf)):
                 self.buttonsdr.append(JoyButtonDataref(self, conf['new_command'], conf['dataref'], conf['type'],\
-                conf['values'], int(conf['increment']), conf['repeat'],section))
+                conf['values'], int(conf['increment']), conf['repeat'], (not conf['loop'].lower() in ['no', 'false', 'disabled', '0', 'disable', 'off']) , section))
             # joyButtonAlias
             elif (xjm.CheckParams(['new_command', 'main_command'], conf)):
                 alias_commands.append(conf) # store alias
