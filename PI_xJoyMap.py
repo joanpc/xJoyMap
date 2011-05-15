@@ -57,6 +57,7 @@ X737_UNLOADED_MESSAGE = -2004318065
 VERSION="1.0rc7"
 # Execute commands before X-plane
 INBEFORE=True
+JOY_AXIS = 100 # joy axis to fetch
  
 class xjm:
     """
@@ -215,7 +216,6 @@ class JoyAxisAssign:
     http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
     """
     def __init__(self, plugin, axis, dataref, dr_range, dr_type = "int", release = 1, dr_round = 0):
-        ## Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
         self.plugin = plugin
         self.axis = int(axis)
         self.dr_range = int(dr_range)
@@ -229,8 +229,6 @@ class JoyAxisAssign:
         if (self.dr_round != 0): self.dr_round = self.dr_round / 2
         self.old_joy_value = -1
         self.old_dr_value = -1
-        
-        #self.dr_value, self.get_dr, self.set_dr, self.cast = xjm.GetDatarefMethods(dataref, dr_type)
         
         self.dataref = EasyDref(dataref, dr_type) 
 
@@ -347,8 +345,6 @@ class JoyButtonDataref:
         self.plugin = plugin
         self.values = []
         self.repeat = repeat
-        self.toggle_mode = False
-        #self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
         
         self.dataref = EasyDref(dataref, type)
         
@@ -373,12 +369,11 @@ class JoyButtonDataref:
                 self.valuesi = 0
                 self.valuesl = len(self.values) - 1
                 self.mode = 'toggle'
-                self.toggle_mode = True
         
         # register new commands
         self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
-        if (self.toggle_mode and self.valuesl > 2):
+        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 1)):
             self.command_down = xjm.CreateCommand(command + '_rev' , description)
             self.newCH_down = self.CommandHandler_down
             XPLMRegisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
@@ -407,8 +402,7 @@ class JoyButtonDataref:
         return 1
     
     def incremental(self, increment):
-        #self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
-        self.dataref.value = self.dataref.value + increment
+        self.dataref.value += increment
         pass
     
     def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
@@ -427,7 +421,7 @@ class JoyButtonDataref:
     def toggle(self, increment):
         if (self.valuesl >= (self.valuesi + increment) >= 0):
             self.valuesi += increment
-            self.dataref.value = self.values[self.valuesi]
+        self.dataref.value = self.values[self.valuesi]
     
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
@@ -492,17 +486,14 @@ class PythonInterface:
         # Defaults
         defaults = {'type':"int", 'release':1, 'negative': 0, 'shift': 0, 'round': 0, 'shifted_command': False, \
                     'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False, 'loop': 'True'}
+        
+        config = ConfigParser.RawConfigParser()
+        alias_commands=[]
+                
         # Plane config
         # Sandy Barbour 21/10/2010 - This will only work when Xplane is up and running.
         # Calling it from XPluginStart will return garbage and could crash Xplane as the strings are full of rubbish
         # If Xplane doesn't crash then is is also possible that the Python scripts can cause strange behaviour
-        # plane, plane_path = XPLMGetNthAircraftModel(0)
-        
-        config = ConfigParser.RawConfigParser()
-        alias_commands=[]
-        
-        # Check for config files
-        # Sandy Barbour 21/10/2010 - See above comment.
         
         # Load only the main config on startup
         if (startup):
@@ -534,8 +525,7 @@ class PythonInterface:
             it's kind of ugly all that stuff here :)
             """
             # Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
-            # The self that you pass in here is not the self that you see inside the class.
-            # The self inside the class is the class, so you need to pass in the PythonInterface class address.
+
             # JoyAxis Assignments
             if  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
@@ -590,7 +580,7 @@ class PythonInterface:
         """
         # Get all axis
         axis_values = []
-        XPLMGetDatavf(self.axis_values_dr, axis_values , 0 ,100)        
+        XPLMGetDatavf(self.axis_values_dr, axis_values , 0 ,JOY_AXIS)        
         for axis_assign in self.axis:
             axis_assign.updateLoop(axis_values)
         return -1
