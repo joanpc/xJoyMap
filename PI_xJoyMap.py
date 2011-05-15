@@ -54,7 +54,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.0rc5"
+VERSION="1.0rc7"
 # Execute commands before X-plane
 INBEFORE=True
  
@@ -68,8 +68,8 @@ class xjm:
         """
         Assigns a constant dataref
         """
-        dr, dr_get, dr_set, cast = xjm.GetDatarefMethods(dataref, type)
-        dr_set(dr, cast(value))
+        dr = EasyDref(dataref, type)
+        dr.value = dr.cast(value)
         
     @classmethod
     def CheckParams(self, params, conf):
@@ -92,15 +92,23 @@ class xjm:
         return XPLMCreateCommand(command, description)
 
     @classmethod
-    def GetDatarefMethods(self, dataref, type = "int"):
+    def debug(self, message, level = 1):
         """
-        return dataref access methods for the specified type
-        it also detects array datarefs and embeded types
+        prints a debug message
         """
+        if (DEBUG >= level): print message
+        pass
+
+class EasyDref:    
+    '''
+    Easy Dataref access
+    
+    Copyright (C) 2011  Joan Perez i Cauhe
+    '''
+    def __init__(self, dataref, type = "int"):
         # Clear dataref
         dataref = dataref.strip()
-        
-        xjm.debug("Get dataref: " + dataref, 3)
+        self.isarray = False
         
         if ('(' in dataref):
             # Detect embedded type, and strip it from dataref
@@ -109,73 +117,84 @@ class xjm:
         
         if ('[' in dataref):
             # We have an array
+            self.isarray = True
             range = dataref[dataref.find('[')+1:dataref.find(']')].split(':')
             dataref = dataref[:dataref.find('[')]
             if (len(range) < 2):
                 range.append(range[0])
             
-            c = ArrayDatarefMethods(range[0], range[1], type)
-            get_dr = c.get_dr
-            set_dr = c.set_dr
-            cast = c.cast
+            self.initArrayDref(range[0], range[1], type)
             
         elif (type == "int"):
-            get_dr = XPLMGetDatai
-            set_dr = XPLMSetDatai
-            cast = int
+            self.dr_get = XPLMGetDatai
+            self.dr_set = XPLMSetDatai
+            self.cast = int
         elif (type == "float"):
-            get_dr = XPLMGetDataf
-            set_dr = XPLMSetDataf
-            cast = float  
+            self.dr_get = XPLMGetDataf
+            self.dr_set = XPLMSetDataf
+            self.cast = float  
         elif (type == "double"):
-            get_dr = XPLMGetDatad
-            set_dr = XPLMSetDatad
-            cast = float
-
-        dr = XPLMFindDataRef(dataref)
-        if dr == False:
-            xjm.debug("Can't find " + dr + " DataRef", -1);
-        return dr, get_dr, set_dr, cast
+            self.dr_get = XPLMGetDatad
+            self.dr_set = XPLMSetDatad
+            self.cast = float
+        else:
+            print "ERROR: invalid DataRef type", type
+            
+        self.DataRef = XPLMFindDataRef(dataref)
+        if self.DataRef == False:
+            print "Can't find " + dataref + " DataRef"
     
-    @classmethod
-    def debug(self, message, level = 1):
-        """
-        prints a debug message
-        """
-        if (DEBUG >= level): print message
+    def initArrayDref(self, first, last, type):
+        self.index = int(first)
+        self.count = int(last) - int(first) +1
+        self.last = int(last)
+        
+        if (type == "int"):
+            self.rget = XPLMGetDatavi
+            self.rset = XPLMSetDatavi
+            self.cast = int
+        elif (type == "float"):
+            self.rget = XPLMGetDatavf
+            self.rset = XPLMSetDatavf
+            self.cast = float  
+        elif (type == "bit"):
+            self.rget = XPLMGetDatab
+            self.rset = XPLMSetDatab
+            self.cast = float
+        else:
+            print "ERROR: invalid DataRef type", type
         pass
 
-    class ArrayDatarefMethods:
-            """
-            Defines datref array access methods
-            """
-            def __init__(self, first, last, type):
-                self.index = int(first)
-                self.count = int(last) - int(first) + 1
-                
-                if (type == "int"):
-                    self.get = XPLMGetDatavi
-                    self.set = XPLMSetDatavi
-                    self.cast = int
-                elif (type == "float"):
-                    self.get = XPLMGetDatavf
-                    self.set = XPLMSetDatavf
-                    self.cast = float  
-                elif (type == "bit"):
-                    get_dr = XPLMGetDatab
-                    set_dr = XPLMSetDatab
-                    self.cast = float
-                pass
-            def get_dr(self, dataref):
-                # We only get the first one for reference
-                list = []
-                self.get(dataref, list, self.index, 2)
-                return list[0]
-            def set_dr(self, dataref, value):
-                # Copy value
-                rvalue = []
-                for i in range(self.count): rvalue.append(self.cast(value)) 
-                return self.set(dataref, rvalue, self.index, self.count)
+    def set(self, value):
+        if (self.isarray):
+            # set same value to all
+            values = []
+            for i in range(self.count): values.append(self.cast(value)) 
+            self.rset(self.DataRef, values, self.index, self.count)
+        else:
+            self.dr_set(self.DataRef, self.cast(value))
+            
+    def get(self):
+        if (self.isarray):
+            list = []
+            # return only the first value
+            self.rget(self.DataRef, list, self.index, 1)
+            return list[0]
+        else:
+            return self.dr_get(self.DataRef)
+        
+    def __getattr__(self, name):
+        if name == 'value':
+            return self.get()
+        else:
+            raise AttributeError
+    
+    def __setattr__(self, name, value):
+        if name == 'value':
+            self.set(value)
+        else:
+            self.__dict__[name] = value
+
  
 class JoyAxisAssign:
     """
@@ -211,20 +230,22 @@ class JoyAxisAssign:
         self.old_joy_value = -1
         self.old_dr_value = -1
         
-        self.dr_value, self.get_dr, self.set_dr, self.cast = xjm.GetDatarefMethods(dataref, dr_type)
+        #self.dr_value, self.get_dr, self.set_dr, self.cast = xjm.GetDatarefMethods(dataref, dr_type)
+        
+        self.dataref = EasyDref(dataref, dr_type) 
 
     def get_current_joy(self, axis_value):
         if (self.negative):
             current = axis_value * self.dr_range * 2 - self.dr_range
         else:
             current = axis_value * self.dr_range
-        return self.cast(current)
+        return self.dataref.cast(current)
 
     # called from the main flightloop
     def updateLoop(self, axis):
 
         current_joy_value = self.get_current_joy(axis[self.axis])
-        current_dr_value = self.get_dr(self.dr_value)
+        current_dr_value = self.dataref.value
     
         if (self.old_dr_value == -1):
             self.old_joy_value = current_joy_value
@@ -239,15 +260,15 @@ class JoyAxisAssign:
                 # Something changed the values update if in release range
                 if (current_joy_value +  self.release > current_dr_value > current_joy_value - self.release):
                     #print "Values in range"
-                    self.set_dr(self.dr_value, current_joy_value)
+                    self.dataref.value = current_joy_value
                 else: return 1
             else:
                 # "No autopilot changes"
-                self.set_dr(self.dr_value, current_joy_value)
+                self.dataref.value = current_joy_value
         
         # Save values
         self.old_joy_value = current_joy_value
-        self.old_dr_value = self.get_dr(self.dr_value)
+        self.old_dr_value = self.dataref.value
         return 1
 
 class JoyButtonAlias:
@@ -326,7 +347,10 @@ class JoyButtonDataref:
         self.plugin = plugin
         self.values = []
         self.repeat = repeat
-        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
+        self.toggle_mode = False
+        #self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
+        
+        self.dataref = EasyDref(dataref, type)
         
         if (increment != False):
             self.action = self.incremental
@@ -344,22 +368,23 @@ class JoyButtonDataref:
             if (values): 
                 nvalues = []
                 for value in values.split(','):
-                    nvalues.append(self.cast(value.strip()))
+                    nvalues.append(self.dataref.cast(value.strip()))
                 self.values = nvalues
                 self.valuesi = 0
                 self.valuesl = len(self.values) - 1
                 self.mode = 'toggle'
+                self.toggle_mode = True
         
         # register new commands
         self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
-        if (self.valuesi and self.valuesi > 2):
+        if (self.toggle_mode and self.valuesl > 2):
             self.command_down = xjm.CreateCommand(command + '_rev' , description)
             self.newCH_down = self.CommandHandler_down
+            XPLMRegisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
         
         #print "register", id(self.plugin), self.command, id(self.newCH)
         XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
-        XPLMRegisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
 
     def CommandHandler(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0):
@@ -382,7 +407,8 @@ class JoyButtonDataref:
         return 1
     
     def incremental(self, increment):
-        self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
+        #self.setdataref(self.dataref, self.getdataref(self.dataref) + increment)
+        self.dataref.value = self.dataref.value + increment
         pass
     
     def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
@@ -396,12 +422,12 @@ class JoyButtonDataref:
         self.valuesi += increment
         if (self.valuesi > self.valuesl): self.valuesi = 0
         if (self.valuesi < 0): self.valuesi = self.valuesl
-        self.setdataref(self.dataref, self.values[self.valuesi])
+        self.dataref.value = self.values[self.valuesi]
     
     def toggle(self, increment):
         if (self.valuesl >= (self.valuesi + increment) >= 0):
             self.valuesi += increment
-            self.setdataref(self.dataref, self.values[self.valuesi])
+            self.dataref.value = self.values[self.valuesi]
     
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
@@ -413,11 +439,10 @@ class JoyButtonDataref:
 class JoySwitch:
     def __init__(self, plugin, new_command, description, dataref, type='int', onval=1, offval=0):
         self.plugin = plugin
-        self.onval = onval
-        self.offval = offval
+        self.dataref = EasyDref(dataref, type)
+        self.onval = self.dataref.cast(onval)
+        self.offval = self.dataref.cast(offval)
         self.command = new_command
-        
-        self.dataref, self.getdataref, self.setdataref, self.cast = xjm.GetDatarefMethods(dataref, type)
 
         # register new command
         self.command = xjm.CreateCommand(self.command, description)
@@ -427,9 +452,9 @@ class JoySwitch:
 
     def CommandHandler(self, inCommand, inPhase, inRefcon):
         if (inPhase == 0):  
-            self.setdataref(self.dataref, self.cast(self.onval))
+            self.dataref.value = self.onval
         if (inPhase == 2):
-            self.setdataref(self.dataref, self.cast(self.offval))
+            self.dataref.value = self.offval
         return 1
 
     def destroy(self):
