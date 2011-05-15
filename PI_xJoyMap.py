@@ -353,8 +353,9 @@ class JoyButtonDataref:
         # register new commands
         self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
-        self.command_down = xjm.CreateCommand(command + '_down' , description)
-        self.newCH_down = self.CommandHandler_down
+        if (self.valuesi and self.valuesi > 2):
+            self.command_down = xjm.CreateCommand(command + '_rev' , description)
+            self.newCH_down = self.CommandHandler_down
         
         #print "register", id(self.plugin), self.command, id(self.newCH)
         XPLMRegisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
