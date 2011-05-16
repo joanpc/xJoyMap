@@ -197,7 +197,7 @@ main_command=x737_VORLOC
 override=True
 
 [Autopilot Level Change x737]
-new_commdn=sim/autopilot/level_change
+new_command=sim/autopilot/level_change
 main_command=x737_LVLCHG
 override=True
 

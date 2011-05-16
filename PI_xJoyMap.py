@@ -32,6 +32,7 @@ from XPLMProcessing import *
 from XPLMDataAccess import *
 from XPLMPlanes import *
 from XPLMPlugin import *
+from XPLMMenus import *
 import ConfigParser
 from os import path
 """
@@ -54,7 +55,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.0rc7"
+VERSION="1.0"
 # Execute commands before X-plane
 INBEFORE=True
 JOY_AXIS = 100 # joy axis to fetch
@@ -411,7 +412,7 @@ class JoyButtonDataref:
         """
         self.action(self.rincrement)
         return 0.02
-
+    
     def toggle_loop(self, increment):
         self.valuesi += increment
         if (self.valuesi > self.valuesl): self.valuesi = 0
@@ -426,6 +427,8 @@ class JoyButtonDataref:
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
         XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
+        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 1)):
+            XPLMUnregisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
         if (self.repeat):
             XPLMUnregisterFlightLoopCallback(self.plugin, self.repeatCH, 0)
         pass
@@ -479,8 +482,20 @@ class PythonInterface:
         self.floop = self.floopCallback
         XPLMRegisterFlightLoopCallback(self, self.floop, 0, 0)
         
+        # Main menu
+        self.Cmenu = self.mmenuCallback
+        self.mPluginItem = XPLMAppendMenuItem(XPLMFindPluginsMenu(), 'xJoyMap', 0, 1)
+        self.mMain = XPLMCreateMenu(self, 'xJoyMap', XPLMFindPluginsMenu(), self.mPluginItem, self.Cmenu, 0)
+        self.mReload = XPLMAppendMenuItem(self.mMain, 'Reload config', False, 1)
+        
         self.config(True)
         return self.Name, self.Sig, self.Desc
+    
+    def mmenuCallback(self, menuRef, menuItem):
+        # Start/Stop menuitem
+        if menuItem == 0:
+            self.clearConfig()
+            self.config()
 
     def config(self, startup = False):
         # Defaults
@@ -589,6 +604,7 @@ class PythonInterface:
         self.clearConfig()
         XPLMUnregisterFlightLoopCallback(self, self.floop, 0)
         XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, INBEFORE, 0)
+        XPLMDestroyMenu(self, self.mRestart)
     
     def XPluginEnable(self):
         return 1
@@ -612,8 +628,8 @@ class PythonInterface:
                     return
                 else:
                     # Disabled until the new release of the PythonInterface
-                    #self.clearConfig()
-                    #self.config()
+                    self.clearConfig()
+                    self.config()
                     pass
         # x737 Plug-in loaded, load config
         X737_ID = XPLMFindPluginBySignature('bs.x737.plugin')

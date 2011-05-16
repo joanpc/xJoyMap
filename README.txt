@@ -1,5 +1,3 @@
-xJoyMap 1.0rc5:
-
 xJoyMap wants to be a simple way to modify datarefs with your joystick and/or creating
 advanced combined commands
 
@@ -34,13 +32,14 @@ Installation
 =============
 
 You need the awesome PYTHON INTERFACE PLUGIN by Sandy Barbour
-http://www.xpluginsdk.org/python_interface.htm
+http://www.xpluginsdk.org/python_interface.htm 
+It requires the last version 2.66.01 prior versions are incompatible.
 
 Copy PI_xJoyMap.py and xJoyMap.ini to your 
 Resources/plugins/PythonScripts directory.
 
 Edit xJoyMap.ini to fit your needs. It contains some examples
-and comments to help you.
+and comments in order to help you.
 
 If you want specific commands for an aircraft
 copy xJoyMap.ini to the aircraft folder and modify it.
