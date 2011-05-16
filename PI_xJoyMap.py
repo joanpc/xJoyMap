@@ -49,16 +49,17 @@ DEBUG=0
 """
 Some constants
 """
-CMD_PREFIX = 'sim/xjoymap/'    #prefix for new commands
+CMD_PREFIX = 'xjoymap/'    #prefix for new commands
 CONF_FILENAME = 'xjoymap.ini'
 ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.0"
+VERSION="1.2"
 # Execute commands before X-plane
 INBEFORE=True
 JOY_AXIS = 100 # joy axis to fetch
+JOY_BUTTONS = 1520
  
 class xjm:
     """
@@ -85,11 +86,14 @@ class xjm:
     @classmethod
     def CreateCommand(self, command, description = 'xjoymap command: fill the description field to change this description'):
         """
-        returns the command with the added prefix if necessary
+        returns the command with added prefix if necessary
         """
         command = command.strip()
         xjm.debug("Create command: " + command, 3)
-        if (not '/' in  command):
+        
+        if ('/' not in command):
+            command = CMD_PREFIX + 'main/' + command
+        elif (command.count('/') < 2) :
             command = CMD_PREFIX + command
         return XPLMCreateCommand(command, description)
 
@@ -100,8 +104,30 @@ class xjm:
         """
         if (DEBUG >= level): print message
         pass
+    @classmethod
+    def saveAssigments(self, file):
+        """
+        Saves joy assigments to a file
+        """
+        f = open(file, 'w')
+        joyaxis = EasyDref('sim/joystick/joystick_axis_assignments[0:JOY_AXIS]')
+        joybuttons = EasyDref('sim/joystick/joystick_button_assignments[0:JOY_BUTTONS]')
+        assigments = {axis: joyaxis.value, buttons: joybuttons.value}
+        pickle.dump(assigments, f)
+    @classmethod
+    def loadAssigments(self, file):
+        """
+        Loads joy assigments from a file
+        """
+        f = open(file, 'r')
+        joyaxis = EasyDref('sim/joystick/joystick_axis_assignments[0:JOY_AXIS]')
+        joybuttons = EasyDref('sim/joystick/joystick_button_assignments[0:JOY_BUTTONS]')
+        assigments = pickle.load(f)
+        joyaxis.value = assigments.axis
+        joybuttons.value = assigments.buttons
+        
 
-class EasyDref:    
+class EasyDref:
     '''
     Easy Dataref access
     
@@ -374,7 +400,7 @@ class JoyButtonDataref:
         # register new commands
         self.command = xjm.CreateCommand(command, description)
         self.newCH = self.CommandHandler
-        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 1)):
+        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 0)):
             self.command_down = xjm.CreateCommand(command + '_rev' , description)
             self.newCH_down = self.CommandHandler_down
             XPLMRegisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
@@ -627,7 +653,6 @@ class PythonInterface:
                     self.clearConfig()
                     return
                 else:
-                    # Disabled until the new release of the PythonInterface
                     self.clearConfig()
                     self.config()
                     pass

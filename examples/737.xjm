@@ -53,7 +53,7 @@ repeat=True
 ; Some of these assignments have to be tested
 
 [x737 flight director]
-new_command=x737_fdirector
+new_command=x737/x737_fdirector
 dataref=x737/systems/afds/fdA_status
 values=0, 1
 
