@@ -65,8 +65,10 @@ shift axis:           Define axis assignments for each shift state
 Thanks
 ======
 
-Many thanks to Sandy Barbour for the awesome X-Plane Phyton Interface,
+to Sandy Barbour for the awesome X-Plane Phyton Interface,
 his support, recommendations and fixes. 
+to Chewbacca400 for his crj200 config file, recommendations 
+and bug repports.
 
 All the x-plane.org community for releasing so quality stuff for free :)
 

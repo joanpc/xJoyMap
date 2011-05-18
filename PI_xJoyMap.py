@@ -136,7 +136,11 @@ class EasyDref:
     def __init__(self, dataref, type = "int"):
         # Clear dataref
         dataref = dataref.strip()
-        self.isarray = False
+        self.isarray, dref = False, False
+        
+        if ('"' in dataref):
+            dref = dataref.split('"')[1]
+            dataref = dataref[:dataref.rfind('"')]
         
         if ('(' in dataref):
             # Detect embedded type, and strip it from dataref
@@ -167,7 +171,8 @@ class EasyDref:
             self.cast = float
         else:
             print "ERROR: invalid DataRef type", type
-            
+        
+        if dref: dataref = dref    
         self.DataRef = XPLMFindDataRef(dataref)
         if self.DataRef == False:
             print "Can't find " + dataref + " DataRef"
@@ -630,7 +635,7 @@ class PythonInterface:
         self.clearConfig()
         XPLMUnregisterFlightLoopCallback(self, self.floop, 0)
         XPLMUnregisterCommandHandler(self, self.shiftcommand, self.shiftCH, INBEFORE, 0)
-        XPLMDestroyMenu(self, self.mRestart)
+        XPLMDestroyMenu(self, self.mMain)
     
     def XPluginEnable(self):
         return 1
