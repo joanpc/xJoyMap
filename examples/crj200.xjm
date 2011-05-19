@@ -4,23 +4,81 @@
 ; (c) 2011 Chewbacca400
 
 ;=========================
-;AUTOPILOT START
+;EICAS
+;=========================
+
+[EICAS CAUTION WARN]
+new_command=crj200/eicas/caution_warn
+dataref=CRJ/eicas/caution_btn
+values = 0, 1
+
+[EICAS MASTER WARN]
+new_command=crj200/eicas/master_warn
+dataref=CRJ/eicas/warning_btn
+values = 0, 1
+
+[EICAS MASTER CAUTON WARN]
+new_command=crj200/eicas/master_caution_warn
+main_command=crj200/eicas/caution_warn, crj200/eicas/master_warn
+
+[EICAS FUEL PAGE]
+new_command=crj200/eicas/fuel_page
+dataref=CRJ/sec_eicas/button_fuel
+values = 1
+
+[EICAS ELECTRIC PAGE]
+new_command=crj200/eicas/electric_page
+dataref=CRJ/sec_eicas/button_elec
+values = 1
+
+[EICAS HYDRAULIC PAGE]
+new_command=crj200/eicas/hydraulic_page
+dataref=CRJ/sec_eicas/button_hyd
+values = 1
+
+[EICAS STATUS PAGE]
+new_command=crj200/eicas/status_page
+dataref=CRJ/sec_eicas/button_stat
+values = 1
+
+[EICAS PRIMARY ENG PAGE]
+new_command=crj200/eicas/primary_eng_page
+dataref=CRJ/sec_eicas/button_pri
+values = 1
+
+[EICAS ENVIRONMENT PAGE]
+new_command=crj200/eicas/ecs_page
+dataref=CRJ/sec_eicas/button_fcs
+values = 1
+
+;[EICAS WARNING MESSAGES]
+;new_command=crj200/eicas/warn_message
+;dataref=CRJ/sec_eicas/button_cas
+;values = 1
+
+;[EICAS STEP PAGE BUTTON]
+;new_command=crj200/eicas/step_page
+;dataref=CRJ/sec_eicas/button_step
+;values = 1
+
+;=========================
+;AUTOPILOT
 ;=========================
 
 [Auto pilot source toggle]
-new_command=crj200/autopilot/AP_HSI_Source
+new_command=crj200/autopilot/HSI_Source
 dataref=CRJ/mfd/nav_source
 values = 0, 1, 2, 3
 ;shift ctrl 6*
 
 [Auto pilot Alt Select Toggle]
-new_command=crj200/autopilot/AP_Alt_Select_Toggle
+new_command=crj200/autopilot/Alt_Select_Toggle
 dataref=CRJ/autopilot/alt_button
 values = 1
 ;shift F3*
 
 [Auto pilot Flight Director Toggle]
-new_command=crj200/autopilot/AP_FD_Toggle
+new_command=crj200/autopilot/FD_Toggle
 dataref=CRJ/autopilot/fd_button
 values = 1
 ;ctrl 1*
@@ -86,7 +144,7 @@ values = 1
 ;alt ctrl 9*
 
 [Auto pilot Vertical Mode]
-new_command=crj200/autopilot/AP_Vertical_Mode_Toggle
+new_command=crj200/autopilot/Vertical_Mode_Toggle
 dataref=CRJ/autopilot/v_button 
 values = 1
 ;alt ctrl 8*
@@ -107,16 +165,51 @@ dataref=CRJ/autopilot/yaw2
 values = 1
 
 [Auto pilot Yaw Damp Both]
-new_command=crj200/autopilot/Ap_Yaw_Damp_Both_Toggle
-main_command=Yaw_Damp1_Toggle,Yaw_Damp2_Toggle
+new_command=crj200/autopilot/Yaw_Damp_Both_Toggle
+main_command=crj200/autopilot/Yaw_Damp1_Toggle, crj200/autopilot/Yaw_Damp2_Toggle
 ;ctrl v*
 
-;=========================
-;AUTOPILOT END
-;=========================
+[AUTOPILOT Select Speed]
+new_command=crj200/autopilot/select_speed
+dataref=CRJ/autopilot/speed
+increment=1
+
+[AUTOPILOT Vertical Speed]
+new_command=crj200/autopilot/select_vertical_speed
+dataref=CRJ/autopilot/verticalspeed
+increment=1
+
+[AUTOPILOT Heading]
+new_command=crj200/autopilot/select_heading
+dataref=CRJ/autopilot/hdg
+increment=1
+
+[AUTOPILOT Altitude]
+new_command=crj200/autopilot/select_altitude
+dataref=CRJ/autopilot/alt
+increment=1
 
 ;=========================
-;APU START
+;Pressure
+;=========================
+
+[PRESSURE Heading]
+new_command=crj200/pressure/landing_alt
+dataref=CRJ/press/ldg_alt
+increment=20
+
+[PRESSURE Baro Atimeter]
+new_command=crj200/pressure/adjust_baro
+dataref=CRJ/baro/pressure
+increment=1
+
+[PRESSURE INCH HPA]
+new_command=crj200/pressure/select_in_hpa
+dataref=CRJ/baro/in_hpa
+values: 1
+
+;=========================
+;ELECTRIC
 ;=========================
 
 [Elec APU Fuel Toggle]
@@ -129,20 +222,12 @@ new_command=crj200/electrical/Elec_APU_Start_Toggle
 dataref=CRJ/apu/apu_start_button_click 
 values = 0, 1
 
-;=========================
-;APU END
-;=========================
-
-;=========================
-;ELECTRIC START
-;=========================
-
 [Elec APU Gen Switch]
 new_command=crj200/electrical/Elec_APU_Gen_Switch
 dataref=CRJ/elec/apu_gen_sw  
 values = 0, 1
 ;shift 1*
-;----------------------------------------------
+
 [Elec Gen1 Switch]
 new_command=crj200/electrical/Elec_Gen1_Switch
 dataref=CRJ/elec/gen1_sw
@@ -155,9 +240,10 @@ values = 0, 1
 
 [Elec Gen both Switch]
 new_command=crj200/electrical/Elec_Gen_both_Switch
-main_command=Elec_Gen1_Switch, Elec_Gen2_Switch
+main_command=crj200/electrical/Elec_Gen1_Switch, crj200/electrical/Elec_Gen2_Switch
+values = 0, 1
 ;shift 2
-;---------------------------------------------
+
 [Elec Batt Master Switch]
 new_command=crj200/electrical/Elec_Batt_Master_Switch
 dataref=CRJ/elec/master_bat_sw
@@ -171,31 +257,37 @@ values = 0, 1
 ;shift ctrl ö (key136)*
 
 ;=========================
-;ELECTRIC END
-;=========================
-
-
-;=========================
-;BLEED START
+;BLEED
 ;=========================
 [Bleed Apu Button]
-new_command=crj200/electrical/Bleed_Apu_Button
+new_command=crj200/bleed/Bleed_Apu_Button
 dataref=CRJ/bleed/apu_button
 values = 0, 1
 ;shit ctrl 3*
 
 [Bleed Isol Button]
-new_command=crj200/electrical/Bleed_Isol_Button
+new_command=crj200/bleed/Bleed_Isol_Button
 dataref=CRJ/bleed/isol_button
 values = 0, 1
 ;ctrl 9*
 
-;=========================
-;BLEED END
-;=========================
+[Bleed LEFT PACK]
+new_command=crj200/bleed/left_pack
+dataref=CRJ/air/pack_l
+values = 0, 1
+
+[Bleed RIGHT PACK]
+new_command=crj200/bleed/right_pack
+dataref=CRJ/air/pack_r
+values = 0, 1
+
+[Bleed LEFT RIGHT PACK]
+new_command=crj200/bleed/left_right_pack
+main_command=crj200/bleed/left_pack, crj200/bleed/right_pack
+values = 0, 1
 
 ;=========================
-;ENGINE START
+;ENGINE
 ;=========================
 
 [ENG Eng Left Mix Handle]
@@ -218,9 +310,24 @@ new_command=crj200/engines/ENG_ENG_Left_Start_Button
 dataref=CRJ/eng/start_left_button
 values = 0, 1
 
+[ENG Eng Right Stop]
+new_command=crj200/engines/ENG_Right_stop
+dataref=CRJ/eng/stop_right_button
+values = 0, 1
+
+[ENG Eng Left Stop]
+new_command=crj200/engines/ENG_left_stop
+dataref=CRJ/eng/stop_left_button
+values = 0, 1
+
 [ENG Eng IgnA Toggle]
 new_command=crj200/engines/ENG_IgnA_Toggle
 dataref=CRJ/eng/ign_a_button
+values = 0, 1
+
+[ENG Eng IgnB Toggle]
+new_command=crj200/engines/ENG_IgnB_Toggle
+dataref=CRJ/eng/ign_b_button
 values = 0, 1
 
 [ENG Eng Con Ign Toggle]
@@ -228,93 +335,89 @@ new_command=crj200/engines/ENG_Con_Ign_Toggle
 dataref=CRJ/eng/ign_cont_button
 values = 0, 1
 
-;=========================
-;ENGINE END
-;=========================
+[Reverse Left Eng Arm]
+new_command=crj200/engines/Reverse_Left_Eng_Arm
+dataref=CRJ/reverser1_arm
+values = 0, 1
+
+[Reverse Right Eng Arm]
+new_command=crj200/engines/Reverse_Right_Eng_Arm
+dataref=CRJ/reverser2_arm
+values = 0, 1
+
+[Reverse Both Eng Arm]
+new_command=crj200/engines/Reverse_Both_Eng_Arm
+main_command=crj200/engines/Reverse_Left_Eng_Arm, crj200/engines/Reverse_Right_Eng_Arm
 
 ;=========================
-;MFD Start
+;MFD
 ;=========================
 
 [MFD Map Range]
-new_command=crj200/mdf/MFD_Map_Range
+new_command=crj200/mfd/MFD_Map_Range
 dataref=CRJ/mfd/range
 values = 0, 1, 2, 3, 4, 5, 6
 
 [MFD Map Mode]
-new_command=crj200/mdf/MFD_Map_Mode
-dataref=CRJ/mfd/mode(float)
-values = 006, 1, 2
+new_command=crj200/mfd/MFD_Map_Mode
+dataref=CRJ/mfd/mode
+values = 1, 2, 3, 4
 
 ;=========================
-;MFD END
+;FUEL
 ;=========================
 
-;=========================
-;FUEL START
-;=========================
-
-;----------------------------------------------
 [Fuel Gravity xflow]
-new_command=crj200/fuel/Fuel_Gravty_xflow_toggle
+new_command=crj200/fuel/Gravity_xflow
 dataref=CRJ/fuel/gravity_xflow_click
 values = 0, 1
 
 [Fuel Pump Left Boost]
-new_command=crj200/fuel/Fuel_Pump_Left_Boost_Toggle
+new_command=crj200/fuel/Pump_L_Boost
 dataref=CRJ/fuel/l_boost_pump_click
 values = 0, 1
 
 [Fuel Pump Right Boost]
-new_command=crj200/fuel/Fuel_Pump_Right_Boost_Toggle
+new_command=crj200/fuel/Pump_R_Boost
 dataref=CRJ/fuel/r_boost_pump_click
 values = 0, 1
 
-[FUEL GravityX_Boost_LR]
-new_command=crj200/fuel/FUEL_GravityX_Boost_LR
-main_command=Fuel_Gravty_xflow_toggle, Fuel_Pump_Left_Boost_Toggle, Fuel_Pump_Right_Boost_Toggle
+[FUEL Boost_LR]
+new_command=crj200/fuel/Fuel_Boost_LR
+main_command=crj200/fuel/Pump_L_Boost, crj200/fuel/Pump_R_Boost
+values = 0, 1
 ;alt ctrl w*
-;---------------------------------------------
 
 ;=========================
-;FUEL END
+;HYDRAULIC
 ;=========================
-
-;=========================
-;HYDRAULIC START
-;=========================
-[Hydraulic Hydr 3A Switch]
-new_command=crj200/hydraulic/Hydraulic_Hydr_3A_Switch
+[Hydraulic Hydr 3A]
+new_command=crj200/hydraulic/Hydr_3A
 dataref=CRJ/hyd/hyd_3a_sw
 values = 0, 1
 
-;-----------------------------------------------
-[Hydraulic Hydr 1 Switch]
-new_command=crj200/hydraulic/Hydraulic_Hydr_1_Switch
+[Hydraulic Hydr 1]
+new_command=crj200/hydraulic/Hydr_1
 dataref=CRJ/hyd/hyd_1_sw
 values = -1, 0, 1
 
-[Hydraulic Hydr 2 Switch]
-new_command=crj200/hydraulic/Hydraulic_Hydr_2_Switch
+[Hydraulic Hydr 2]
+new_command=crj200/hydraulic/Hydr_2
 dataref=CRJ/hyd/hyd_2_sw
 values = -1, 0, 1
 
-[Hydraulic Hydr 3B Switch]
-new_command=crj200/hydraulic/Hydraulic_Hydr_3B_Switch
+[Hydraulic Hydr 3B]
+new_command=crj200/hydraulic/Hydr_3B
 dataref=CRJ/hyd/hyd_3b_sw
 values = -1, 0, 1
 
 [Hydraulic Hydr 1 2 3B]
-new_command=crj200/hydraulic/Hydraulic_Hydr_1_2_3B_Switch
-main_command=Hydraulic_Hydr_1_Switch,Hydraulic_Hydr_2_Switch,Hydraulic_Hydr_3B_Switch
+new_command=crj200/hydraulic/Hydr_1_2_3B
+main_command=crj200/hydraulic/Hydr_1, crj200/hydraulic/Hydr_2, crj200/hydraulic/Hydr_3B
 ;alt ctrl u*
 
 ;=========================
-;HYDRAULIC END
-;=========================
-
-;=========================
-;FMS START
+;FMS
 ;=========================
 
 [FMS IRS1]
@@ -329,7 +432,7 @@ values = 0, 1, 2
 
 [FMS IRS Both]
 new_command=crj200/fms/FMS_IRS_Both_Switch
-main_command=FMS_IRS_1_switch,FMS_IRS_2_switch
+main_command=crj200/fms/FMS_IRS_1_switch,crj200/fms/FMS_IRS_2_switch
 
 [FMS Bearing 1]
 new_command=crj200/fms/FMS_Bearing_1
@@ -342,34 +445,18 @@ new_command=crj200/fms/FMS_Bearing_2
 dataref=CRJ/mfd/brg2_button
 values = 1
 ;ctrl 5
+
 ;=========================
-;SPOILER THRUST REVERS START
+;SPOILERS
 ;=========================
 
 [Spoilers Arm]
 new_command=crj200/spoilers/Spoilers_Arm
 dataref=sim/cockpit2/controls/speedbrake_ratio(float)
 values = 0, -0.5
-;--------------------------------------------
-[Reverse Left Eng Arm]
-new_command=crj200/engines/Reverse_Left_Eng_Arm
-dataref=CRJ/reverser1_arm
-values = 0, 1
-
-[Reverse Right Eng Arm]
-new_command=crj200/engines/Reverse_Right_Eng_Arm
-dataref=CRJ/reverser2_arm
-values = 0, 1
-
-[Reverse Both Eng Arm]
-new_command=crj200/engines/Reverse_Both_Eng_Arm
-main_command=Reverse_Left_Eng_Arm,Reverse_Right_Eng_Arm
 
 ;=========================
-;SPOILER THRUST REVERS END
-;=========================
-;=========================
-;LIGHTS
+;LIGHTS 
 ;=========================
 
 [Lights Landing Left switch]
@@ -389,371 +476,364 @@ values = 0,  1
 
 [Lights Landing Lights All]
 new_command=crj200/lights/Lights_Landing_Lights_All
-;
-; joan, better to control the entire array
-; main_command=Lights_Land_Left,Lights_Land_Right,Lights_Land_Nose
 dataref=sim/cockpit2/switches/landing_lights_switch[0:2](float)
 values = 0,  1
 
 ;=========================
-;FMC START
+;FMC
 ;=========================
 
 [FMS L1]
-new_command=crj200/fmc/FMC_L1
+new_command=crj200/fmc/L1
 dataref=CRJ/fms/L1_button
 values = 1
 
 [FMS L2]
-new_command=crj200/fmc/FMC_L2
+new_command=crj200/fmc/L2
 dataref=CRJ/fms/L2_button
 values = 1
 
 [FMS L3]
-new_command=crj200/fmc/FMC_L3
+new_command=crj200/fmc/L3
 dataref=CRJ/fms/L3_button
 values = 1
 
 [FMS L4]
-new_command=crj200/fmc/FMC_L4
+new_command=crj200/fmc/L4
 dataref=CRJ/fms/L4_button
 values = 1
 
 [FMS L5]
-new_command=crj200/fmc/FMC_L5
+new_command=crj200/fmc/L5
 dataref=CRJ/fms/L5_button
 values = 1
 
 [FMS L6]
-new_command=crj200/fmc/FMC_L6
+new_command=crj200/fmc/L6
 dataref=CRJ/fms/L6_button
 values = 1
 
 [FMS R1]
-new_command=crj200/fmc/FMC_R1
+new_command=crj200/fmc/R1
 dataref=CRJ/fms/R1_button
 values = 1
 
 [FMS R2]
-new_command=crj200/fmc/FMC_R2
+new_command=crj200/fmc/R2
 dataref=CRJ/fms/R2_button
 values = 1
 
 [FMS R3]
-new_command=crj200/fmc/FMC_R3
+new_command=crj200/fmc/R3
 dataref=CRJ/fms/R3_button
 values = 1
 
 [FMS R4]
-new_command=crj200/fmc/FMC_R4
+new_command=crj200/fmc/R4
 dataref=CRJ/fms/R4_button
 values = 1
 
 [FMS R5]
-new_command=crj200/fmc/FMC_R5
+new_command=crj200/fmc/R5
 dataref=CRJ/fms/R5_button
 values = 1
 
 [FMS R6]
-new_command=crj200/fmc/FMC_R6
+new_command=crj200/fmc/R6
 dataref=CRJ/fms/R6_button
 values = 1
 
-
-;-------------------------------------------------
 [FMS Slash]
-new_command=crj200/fmc/FMC_slash
+new_command=crj200/fmc/slash
 dataref=CRJ/click/fms_bar
 values = 1
 
 [FMS plus minus]
-new_command=crj200/fmc/FMC_plus_minus
+new_command=crj200/fmc/plus_minus
 dataref=CRJ/click/fms_plus_minus
 values = 1
 
 [FMS point decimal]
-new_command=crj200/fmc/FMC_point_decimal
+new_command=crj200/fmc/point_decimal
 dataref=CRJ/click/fms_point
 values = 1
 
 [FMS 0]
-new_command=crj200/fmc/FMC_0
+new_command=crj200/fmc/0
 dataref=CRJ/click/fms_0
 values = 1
 
 [FMS 1]
-new_command=crj200/fmc/FMC_1
+new_command=crj200/fmc/1
 dataref=CRJ/click/fms_1
 values = 1
 
 [FMS 2]
-new_command=crj200/fmc/FMC_2
+new_command=crj200/fmc/2
 dataref=CRJ/click/fms_2
 values = 1
 
 [FMS 3]
-new_command=crj200/fmc/FMC_3
+new_command=crj200/fmc/3
 dataref=CRJ/click/fms_3
 values = 1
 
 [FMS 4]
-new_command=crj200/fmc/FMC_4
+new_command=crj200/fmc/4
 dataref=CRJ/click/fms_4
 values = 1
 
 [FMS 5]
-new_command=crj200/fmc/FMC_5
+new_command=crj200/fmc/5
 dataref=CRJ/click/fms_5
 values = 1
 
 [FMS 6]
-new_command=crj200/fmc/FMC_6
+new_command=crj200/fmc/6
 dataref=CRJ/click/fms_6
 values = 1
 
 [FMS 7]
-new_command=crj200/fmc/FMC_7
+new_command=crj200/fmc/7
 dataref=CRJ/click/fms_7
 values = 1
 
 [FMS 8]
-new_command=crj200/fmc/FMC_8
+new_command=crj200/fmc/8
 dataref=CRJ/click/fms_8
 values = 1
 
 [FMS 9]
-new_command=crj200/fmc/FMC_9
+new_command=crj200/fmc/9
 dataref=CRJ/click/fms_9
 values = 1
 
 [FMS a]
-new_command=crj200/fmc/FMC_a
+new_command=crj200/fmc/a
 dataref=CRJ/click/fms_a
 values = 1
 
 [FMS b]
-new_command=crj200/fmc/FMC_b
+new_command=crj200/fmc/b
 dataref=CRJ/click/fms_b
 values = 1
 
 [FMS c]
-new_command=crj200/fmc/FMC_c
+new_command=crj200/fmc/c
 dataref=CRJ/click/fms_c
 values = 1
 
 [FMS d]
-new_command=crj200/fmc/FMC_d
+new_command=crj200/fmc/d
 dataref=CRJ/click/fms_d
 values = 1
 
 [FMS e]
-new_command=crj200/fmc/FMC_e
+new_command=crj200/fmc/e
 dataref=CRJ/click/fms_e
 values = 1
 
 [FMS f]
-new_command=crj200/fmc/FMC_f
+new_command=crj200/fmc/f
 dataref=CRJ/click/fms_f
 values = 1
 
 [FMS g]
-new_command=crj200/fmc/FMC_g
+new_command=crj200/fmc/g
 dataref=CRJ/click/fms_g
 values = 1
 
 [FMS h]
-new_command=crj200/fmc/FMC_h
+new_command=crj200/fmc/h
 dataref=CRJ/click/fms_h
 values = 1
 
 [FMS i]
-new_command=crj200/fmc/FMC_i
+new_command=crj200/fmc/i
 dataref=CRJ/click/fms_i
 values = 1
 
 [FMS j]
-new_command=crj200/fmc/FMC_j
+new_command=crj200/fmc/j
 dataref=CRJ/click/fms_j
 values = 1
 
 [FMS k]
-new_command=crj200/fmc/FMC_k
+new_command=crj200/fmc/k
 dataref=CRJ/click/fms_k
 values = 1
 
 [FMS l]
-new_command=crj200/fmc/FMC_l
+new_command=crj200/fmc/l
 dataref=CRJ/click/fms_l
 values = 1
 
 [FMS m]
-new_command=crj200/fmc/FMC_m
+new_command=crj200/fmc/m
 dataref=CRJ/click/fms_m
 values = 1
 
 [FMS n]
-new_command=crj200/fmc/FMC_n
+new_command=crj200/fmc/n
 dataref=CRJ/click/fms_n
 values = 1
 
 [FMS o]
-new_command=crj200/fmc/FMC_o
+new_command=crj200/fmc/o
 dataref=CRJ/click/fms_o
 values = 1
 
 [FMS p]
-new_command=crj200/fmc/FMC_p
+new_command=crj200/fmc/p
 dataref=CRJ/click/fms_p
 values = 1
 
 [FMS q]
-new_command=crj200/fmc/FMC_q
+new_command=crj200/fmc/q
 dataref=CRJ/click/fms_q
 values = 1
 
 [FMS r]
-new_command=crj200/fmc/FMC_r
+new_command=crj200/fmc/r
 dataref=CRJ/click/fms_r
 values = 1
 
 [FMS s]
-new_command=crj200/fmc/FMC_s
+new_command=crj200/fmc/s
 dataref=CRJ/click/fms_s
 values = 1
 
 [FMS t]
-new_command=crj200/fmc/FMC_t
+new_command=crj200/fmc/t
 dataref=CRJ/click/fms_t
 values = 1
 
 [FMS u]
-new_command=crj200/fmc/FMC_u
+new_command=crj200/fmc/u
 dataref=CRJ/click/fms_u
 values = 1
 
 [FMS v]
-new_command=crj200/fmc/FMC_v
+new_command=crj200/fmc/v
 dataref=CRJ/click/fms_v
 values = 1
 
 [FMS w]
-new_command=crj200/fmc/FMC_w
+new_command=crj200/fmc/w
 dataref=CRJ/click/fms_w
 values = 1
 
 [FMS x]
-new_command=crj200/fmc/FMC_x
+new_command=crj200/fmc/x
 dataref=CRJ/click/fms_x
 values = 1
 
 [FMS y]
-new_command=crj200/fmc/FMC_y
+new_command=crj200/fmc/y
 dataref=CRJ/click/fms_y
 values = 1
 
 [FMS z]
-new_command=crj200/fmc/FMC_z
+new_command=crj200/fmc/z
 dataref=CRJ/click/fms_z
 values = 1
 
 [FMS space]
-new_command=crj200/fmc/FMC_space
+new_command=crj200/fmc/space
 dataref=CRJ/click/fms_space
 values = 1
 
-;----------------------------------------------
-
 [FMS clr]
-new_command=crj200/fmc/FMC_clr
+new_command=crj200/fmc/clr
 dataref=CRJ/click/fms_clr
 values = 1
 
 [FMS Delete]
-new_command=crj200/fmc/FMC_DEL
+new_command=crj200/fmc/DEL
 dataref=CRJ/click/fms_delete
 values = 1
 
 [FMS MCDU]
-new_command=crj200/fmc/FMC_MCDU
+new_command=crj200/fmc/MCDU
 dataref=CRJ/fms/mcdu_menu_button
 values = 1
 ;F2
 
 [FMS INDEX]
-new_command=crj200/fmc/FMC_INDEX
+new_command=crj200/fmc/INDEX
 dataref=CRJ/fms/index_button
 values = 1
 ;F1
 
 [FMS FLPN]
-new_command=crj200/fmc/FMC_FLPN
+new_command=crj200/fmc/FLPN
 dataref=CRJ/fms/fpln_button
 values = 1
 ;F3
 
 [FMS DEP/ARR]
-new_command=crj200/fmc/FMC_DEP_ARR
+new_command=crj200/fmc/DEP_ARR
 dataref=CRJ/fms/dep_arr_button
 values = 1
 ;F4
 
 [FMS LEGS]
-new_command=crj200/fmc/FMC_LEGS
+new_command=crj200/fmc/LEGS
 dataref=CRJ/fms/legs_button
 values = 1
 ;F5
 
 [FMS RADIOS]
-new_command=crj200/fmc/FMC_RADIOS
+new_command=crj200/fmc/RADIOS
 dataref=CRJ/fms/radio_button
 values = 1
 ;F6
 
 [FMS HOLD]
-new_command=crj200/fmc/FMC_HOLD
+new_command=crj200/fmc/HOLD
 dataref=CRJ/fms/hold_button
 values = 1
 ;F7
 
 [FMS PERF]
-new_command=crj200/fmc/FMC_PERF
+new_command=crj200/fmc/PERF
 dataref=CRJ/fms/perf_button
 values = 1
 ;F8
 
 [FMS MFD]
-new_command=crj200/fmc/FMC_MFD
+new_command=crj200/fmc/MFD
 dataref=CRJ/fms/mfd_menu_button
 values = 1
 ;F9
 
 [FMS UP Button]
-new_command=crj200/fmc/FMC_UP_Button
+new_command=crj200/fmc/UP_Button
 dataref=CRJ/fms/up_button
 values = 1
 ;up
 
 [FMS Down Button]
-new_command=crj200/fmc/FMC_Down_Button
+new_command=crj200/fmc/Down_Button
 dataref=CRJ/fms/down_button
 values = 1
 ;down
 
 [FMS Pev Page]
-new_command=crj200/fmc/FMC_Prev_Page
+new_command=crj200/fmc/Prev_Page
 dataref=CRJ/fms/prev_page_button
 values = 1
 ;left
 
 [FMS Next Page]
-new_command=crj200/fmc/FMC_Next_Page
+new_command=crj200/fmc/Next_Page
 dataref=CRJ/fms/next_page_button
 values = 1
 
 ;CRJ/fms/exec_button;
 
 ;=========================
-;FMC END
+;VSPEEDS
 ;=========================
 
 [SPEEDS V1 VR V2]
@@ -770,25 +850,49 @@ increment=1
 [SPEEDS TGT/Vspeeds]
 new_command=crj200/fms/Speeds_TGT_Vspeeds
 dataref=CRJ/spd/tgt_vspds
-description=TGT Vspeeds
-increment=1
+values: 0, 1
 
 ;=========================
-;VSPEEDS
+;Popup Dispalys
 ;=========================
 
+[FMS CDU popup]
+new_command=crj200/popup/CDU
+dataref=CRJ/popup/cdu
+values = 0, 1
+
+[FMS 1st EICAS popup]
+new_command=crj200/popup/1st_EICAS
+dataref= CRJ/popup/p_eicas
+values = 0, 1
+
+[FMS 2nd EICAS popup]
+new_command=crj200/popup/2nd_EICAS
+dataref= CRJ/pop/seicas
+values = 0, 1
+
+[FMS PFD popup]
+new_command=crj200/popup/PFD
+dataref=CRJ/pop/pfd
+values = 0, 1
+
+[FMS MFD popup]
+new_command=crj200/popup/MFD
+dataref=CRJ/pop/mfd
+values = 0, 1
 ;
+;---------------------------------------------------
 ; X-plane default commands overrides
 ;
 
 [Auto pilot Flight Director Toggle crj200]
 new_command=sim/autopilot/fdir_toggle
-main_command=crj200/autopilot/AP_FD_Toggle
+main_command=crj200/autopilot/FD_Toggle
 override = true
 
 [Autopilot Vertical Speed crj200]
 new_command=sim/autopilot/vertical_speed
-main_command=crj200/autopilot/AP_Vertical_Mode_Toggle
+main_command=crj200/autopilot/Vertical_Mode_Toggle
 override=True
 
 
@@ -817,11 +921,6 @@ override=True
 ; main_command= ???
 ; override=True
 
-[Autopilot Vertical Speed crj200]
-new_command=sim/autopilot/vertical_speed
-main_command=crj200/autopilot/AP_Vertical_Mode_Toggle
-override=True
-
 [Autopilot Approach crj200]
 new_command=sim/autopilot/approach
 main_command=crj200/autopilot/APPR_Toggle
@@ -829,5 +928,5 @@ override=True
 
 [Autopilot Alt Hold]
 new_command=sim/autopilot/altitude_hold
-main_command=crj200/autopilot/AP_Alt_Select_Toggle
+main_command=crj200/autopilot/Alt_Select_Toggle
 override=True

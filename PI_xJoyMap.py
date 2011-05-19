@@ -140,7 +140,7 @@ class EasyDref:
         
         if ('"' in dataref):
             dref = dataref.split('"')[1]
-            dataref = dataref[:dataref.rfind('"')]
+            dataref = dataref[dataref.rfind('"')+1:]
         
         if ('(' in dataref):
             # Detect embedded type, and strip it from dataref
