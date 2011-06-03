@@ -437,7 +437,6 @@ class JoyButtonDataref:
     
     def incremental(self, increment):
         self.dataref.value += increment
-        print self.dataref.value
         pass
     
     def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
@@ -585,7 +584,7 @@ class PythonInterface:
             # JoyButtonDataref
             elif(xjm.CheckParams(['new_command', 'dataref'], conf)):
                 self.buttonsdr.append(JoyButtonDataref(self, conf['new_command'], conf['dataref'], conf['type'],\
-                conf['values'], int(conf['increment']), conf['repeat'], (not conf['loop'].lower() in ['no', 'false', 'disabled', '0', 'disable', 'off']) , section))
+                conf['values'], conf['increment'], conf['repeat'], (not conf['loop'].lower() in ['no', 'false', 'disabled', '0', 'disable', 'off']) , section))
             # joyButtonAlias
             elif (xjm.CheckParams(['new_command', 'main_command'], conf)):
                 alias_commands.append(conf) # store alias
