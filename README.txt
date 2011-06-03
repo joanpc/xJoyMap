@@ -32,8 +32,14 @@ Installation
 =============
 
 You need the awesome PYTHON INTERFACE PLUGIN by Sandy Barbour
-http://www.xpluginsdk.org/python_interface.htm 
+http://www.xpluginsdk.org/python_interface_sdk100_downloads.htm
 It requires the last version 2.66.01 prior versions are incompatible.
+
+Note: If you're using windows or an old osx version you must also install Python:
+http://www.xpluginsdk.org/python_interface_sdk100_downloads.htm
+
+For more info read sandy's documentation:
+ http://www.xpluginsdk.org/downloads/PythonInterfaceDocuments.zip
 
 Copy PI_xJoyMap.py and xJoyMap.ini to your 
 Resources/plugins/PythonScripts directory.

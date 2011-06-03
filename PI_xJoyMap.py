@@ -113,7 +113,8 @@ class xjm:
         joyaxis = EasyDref('sim/joystick/joystick_axis_assignments[0:JOY_AXIS]')
         joybuttons = EasyDref('sim/joystick/joystick_button_assignments[0:JOY_BUTTONS]')
         assigments = {axis: joyaxis.value, buttons: joybuttons.value}
-        pickle.dump(assigments, f)
+        cpickle.dump(assigments, f)
+        f.close()
     @classmethod
     def loadAssigments(self, file):
         """
@@ -122,9 +123,10 @@ class xjm:
         f = open(file, 'r')
         joyaxis = EasyDref('sim/joystick/joystick_axis_assignments[0:JOY_AXIS]')
         joybuttons = EasyDref('sim/joystick/joystick_button_assignments[0:JOY_BUTTONS]')
-        assigments = pickle.load(f)
+        assigments = cpickle.load(f)
         joyaxis.value = assigments.axis
         joybuttons.value = assigments.buttons
+        f.close()
         
 
 class EasyDref:
@@ -382,7 +384,7 @@ class JoyButtonDataref:
         
         if (increment != False):
             self.action = self.incremental
-            self.increment = int(increment)
+            self.increment = self.dataref.cast(increment)
             self.mode = 'incremental'      
             if(self.repeat):
                 self.repeatCH = self.RepeatCallback
@@ -435,6 +437,7 @@ class JoyButtonDataref:
     
     def incremental(self, increment):
         self.dataref.value += increment
+        print self.dataref.value
         pass
     
     def RepeatCallback(self, elapsedMe, elapsedSim, counter, refcon):
@@ -519,7 +522,6 @@ class PythonInterface:
         self.mMain = XPLMCreateMenu(self, 'xJoyMap', XPLMFindPluginsMenu(), self.mPluginItem, self.Cmenu, 0)
         self.mReload = XPLMAppendMenuItem(self.mMain, 'Reload config', False, 1)
         
-        self.config(True)
         return self.Name, self.Sig, self.Desc
     
     def mmenuCallback(self, menuRef, menuItem):
@@ -638,6 +640,7 @@ class PythonInterface:
         XPLMDestroyMenu(self, self.mMain)
     
     def XPluginEnable(self):
+        self.config(True)
         return 1
     
     def XPluginDisable(self):
@@ -671,5 +674,5 @@ class PythonInterface:
                 xjm.debug("x737 plug-in unloaded, clearing config")
                 self.clearConfig()
         else:
-            print inFromWho, inMessage
+            xjm.debug("message from: " + str(inFromWho) + ' id: ' +  str(inMessage), 3)
         pass
