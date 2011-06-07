@@ -55,7 +55,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.2"
+VERSION="1.2.2"
 # Execute commands before X-plane
 INBEFORE=True
 JOY_AXIS = 100 # joy axis to fetch
@@ -460,7 +460,7 @@ class JoyButtonDataref:
     def destroy(self):
         #print "destroy", id(self.plugin), self.command, id(self.newCH)
         XPLMUnregisterCommandHandler(self.plugin, self.command, self.newCH, INBEFORE, 0)
-        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 1)):
+        if (self.mode == 'incremental' or (self.mode == 'toggle' and self.valuesl > 0)):
             XPLMUnregisterCommandHandler(self.plugin, self.command_down, self.newCH_down, INBEFORE, 0)
         if (self.repeat):
             XPLMUnregisterFlightLoopCallback(self.plugin, self.repeatCH, 0)
