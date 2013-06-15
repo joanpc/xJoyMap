@@ -572,10 +572,23 @@ class PythonInterface:
             """
             # Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
 
-            # JoyAxis Assignments
+            # JoyAxis Assignments (New way)
             if  (xjm.CheckParams(['axis', 'dataref', 'drl', 'drh'], conf)):
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
                 conf['dataref'], conf['drl'], conf['drh'], conf['type'], conf['release'], \
+                conf['round']))
+            # JoyAxis Assignments (Compatible (old) way)
+            elif  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
+                rng=float(conf['range'])
+		if (rng < 0):
+		  rng_min=rng
+		  rng_max=abs(rng)
+	        else:
+                  rng_min=0
+		  rng_max=rng
+
+                self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
+                conf['dataref'], rng_min, rng_max, conf['type'], conf['release'], \
                 conf['round']))
             # JoySwitch
             elif (xjm.CheckParams(['new_command', 'on_value', 'off_value', 'dataref'], conf)):
