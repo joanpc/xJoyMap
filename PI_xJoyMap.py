@@ -239,7 +239,8 @@ class JoyAxisAssign:
     
     axis: joy axis #
     dataref: Dataref string
-    dr_range: range of the dataref ex: 3 = 0 to 3: -3 = 30 
+    drl: dataref value when axis is at 0 percent
+    drh: dataref value when axis is at 100 percent
     dr_type: int or float
     release: soft release range to retake control if the value is changed externally 
              usually by the autopilot.
@@ -249,28 +250,26 @@ class JoyAxisAssign:
               
     http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
     """
-    def __init__(self, plugin, axis, dataref, dr_range, dr_type = "int", release = 1, dr_round = 0):
+    def __init__(self, plugin, axis, dataref, drl, drh, dr_type = "int", release = 1, dr_round = 0):
         self.plugin = plugin
         self.axis = int(axis)
-        self.dr_range = int(dr_range)
         self.dr_type = dr_type
         self.release = int(release)
-        if (self.dr_range < 0): # Enable negative ranges
-            self.negative = True
-            self.dr_range = self.dr_range * -1
-        else: self.negative = False
+	self.drl = float(drl)
+	self.drh = float(drh)
         self.dr_round = int(dr_round)
         if (self.dr_round != 0): self.dr_round = self.dr_round / 2
         self.old_joy_value = -1
         self.old_dr_value = -1
-        
         self.dataref = EasyDref(dataref, dr_type) 
+	print "New Axis ", self.axis, " ranging ", drl, " to ", drh
 
     def get_current_joy(self, axis_value):
-        if (self.negative):
-            current = axis_value * self.dr_range * 2 - self.dr_range
-        else:
-            current = axis_value * self.dr_range
+	current = self.drl + (axis_value * (self.drh - self.drl))
+        #if (self.negative):
+        #    current = axis_value * self.dr_range * 2 - self.dr_range
+        #else:
+        #    current = axis_value * self.dr_range
         return self.dataref.cast(current)
 
     # called from the main flightloop
@@ -531,7 +530,7 @@ class PythonInterface:
 
     def config(self, startup = False):
         # Defaults
-        defaults = {'type':"int", 'release':1, 'negative': 0, 'shift': 0, 'round': 0, 'shifted_command': False, \
+        defaults = {'type':"int", 'release':1, 'shift': 0, 'round': 0, 'shifted_command': False, \
                     'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False, 'loop': 'True'}
         
         config = ConfigParser.RawConfigParser()
@@ -573,10 +572,23 @@ class PythonInterface:
             """
             # Sandy Barbour - Need to pass in PythonInterface address so that callbacks etc will work from withing a class
 
-            # JoyAxis Assignments
-            if  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
+            # JoyAxis Assignments (New way)
+            if  (xjm.CheckParams(['axis', 'dataref', 'drl', 'drh'], conf)):
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
-                conf['dataref'], conf['range'], conf['type'], conf['release'], \
+                conf['dataref'], conf['drl'], conf['drh'], conf['type'], conf['release'], \
+                conf['round']))
+            # JoyAxis Assignments (Compatible (old) way)
+            elif  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
+                rng=float(conf['range'])
+		if (rng < 0):
+		  rng_min=rng
+		  rng_max=abs(rng)
+	        else:
+                  rng_min=0
+		  rng_max=rng
+
+                self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
+                conf['dataref'], rng_min, rng_max, conf['type'], conf['release'], \
                 conf['round']))
             # JoySwitch
             elif (xjm.CheckParams(['new_command', 'on_value', 'off_value', 'dataref'], conf)):
