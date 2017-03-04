@@ -56,7 +56,7 @@ ACF_CONF_FILENAME = '.xjm'
 X737_CHECK_FILE = '_x737pluginVersion.txt'
 X737_INITIALIZED_MESSAGE = -2004318080
 X737_UNLOADED_MESSAGE = -2004318065
-VERSION="1.2.2"
+VERSION="1.3.0"
 # Execute commands before X-plane
 INBEFORE=True
 JOY_AXIS = 100 # joy axis to fetch
