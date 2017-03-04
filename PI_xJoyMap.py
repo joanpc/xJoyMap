@@ -35,6 +35,7 @@ from XPLMPlugin import *
 from XPLMMenus import *
 import ConfigParser
 from os import path
+import math
 """
 Enables debug messages to help finding problems with config files
 levels:
@@ -247,25 +248,37 @@ class JoyAxisAssign:
     dr_round: Rounding done at the dataref, sometimes after setting a dataref value
               the value is rounded by the sim. Without this setting the class will 
               detect the rounding as an autopilot action. (ex: 100 for vertical_velocity)
+    steps: update dataref in that number of steps, like those of flaps. Default
+           is 0, which means the normal, continous behaviour
               
     http://www.xsquawkbox.net/xpsdk/docs/DataRefs.html list of datarefs
     """
-    def __init__(self, plugin, axis, dataref, drl, drh, dr_type = "int", release = 1, dr_round = 0):
+    def __init__(self, plugin, axis, dataref, drl, drh, dr_type = "int", release = 1, dr_round = 0, steps=0):
         self.plugin = plugin
         self.axis = int(axis)
         self.dr_type = dr_type
         self.release = int(release)
-	self.drl = float(drl)
-	self.drh = float(drh)
+        self.drl = float(drl)
+        self.drh = float(drh)
         self.dr_round = int(dr_round)
         if (self.dr_round != 0): self.dr_round = self.dr_round / 2
         self.old_joy_value = -1
         self.old_dr_value = -1
         self.dataref = EasyDref(dataref, dr_type) 
-	print "New Axis ", self.axis, " ranging ", drl, " to ", drh
+        self.steps = int(steps)
+        #Let's get max amd min values for mapping
+        self.axis_min = EasyDref("sim/joystick/joystick_axis_minimum[" + str(axis) + "]", "float").value
+        self.axis_max = EasyDref("sim/joystick/joystick_axis_maximum[" + str(axis) + "]", "float").value
+        print "New Axis ", self.axis, " ranging ", drl, " to ", drh, "steps", steps
 
     def get_current_joy(self, axis_value):
-	current = self.drl + (axis_value * (self.drh - self.drl))
+        #To avoid division by 0 from nonexistant axis, we check and do the mapping
+        if self.axis_max > 0:
+            axis_value = (axis_value - self.axis_min)/(self.axis_max - self.axis_min)
+        if self.steps > 0:
+            stepsize = 1.0 / self.steps
+            axis_value = math.floor(((axis_value - stepsize) / stepsize) + 0.5) * stepsize + stepsize
+        current = self.drl + (axis_value * (self.drh - self.drl))
         #if (self.negative):
         #    current = axis_value * self.dr_range * 2 - self.dr_range
         #else:
@@ -531,7 +544,8 @@ class PythonInterface:
     def config(self, startup = False):
         # Defaults
         defaults = {'type':"int", 'release':1, 'shift': 0, 'round': 0, 'shifted_command': False, \
-                    'values': False, 'increment' : False, 'description': '', 'override': False, 'repeat': False, 'loop': 'True'}
+                    'values': False, 'increment' : False, 'description': '', 'override': False, \
+                    'repeat': False, 'loop': 'True', 'steps': 0}
         
         config = ConfigParser.RawConfigParser()
         alias_commands=[]
@@ -576,20 +590,20 @@ class PythonInterface:
             if  (xjm.CheckParams(['axis', 'dataref', 'drl', 'drh'], conf)):
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
                 conf['dataref'], conf['drl'], conf['drh'], conf['type'], conf['release'], \
-                conf['round']))
+                conf['round'], conf['steps']))
             # JoyAxis Assignments (Compatible (old) way)
             elif  (xjm.CheckParams(['axis', 'dataref', 'range'], conf)):
                 rng=float(conf['range'])
-		if (rng < 0):
-		  rng_min=rng
-		  rng_max=abs(rng)
-	        else:
+                if (rng < 0):
+                  rng_min=rng
+                  rng_max=abs(rng)
+                else:
                   rng_min=0
-		  rng_max=rng
+                  rng_max=rng
 
                 self.axis.append(JoyAxisAssign(self, int(conf['axis']), \
                 conf['dataref'], rng_min, rng_max, conf['type'], conf['release'], \
-                conf['round']))
+                conf['round'], conf['steps']))
             # JoySwitch
             elif (xjm.CheckParams(['new_command', 'on_value', 'off_value', 'dataref'], conf)):
                 self.buttons.append(JoySwitch(self, conf['new_command'], conf['description'], conf['dataref'], conf['type'], conf['on_value'], conf['off_value']))
